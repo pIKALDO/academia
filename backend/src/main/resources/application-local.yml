@@ -1,0 +1,28 @@
+# Perfil de desarrollo local, contra la infraestructura de docker-compose.yml.
+#
+# Los valores por defecto (`:-`) coinciden con los de docker-compose.yml para que
+# `docker compose up -d` + `mvn spring-boot:run -Dspring-boot.run.profiles=local` funcione
+# sin configurar nada más. Son credenciales de desarrollo, no secretos reales: para
+# sobrescribirlas basta con exportar la variable de entorno correspondiente.
+server:
+  servlet:
+    session:
+      cookie:
+        # Local corre sobre http://localhost, sin TLS: con secure=true el navegador
+        # descartaría la cookie de sesión y el login no funcionaría nunca en desarrollo.
+        secure: false
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:academia}
+    username: ${POSTGRES_USER:academia}
+    password: ${POSTGRES_PASSWORD:academia_dev}
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+
+logging:
+  level:
+    com.academia: DEBUG
+    org.flywaydb: INFO

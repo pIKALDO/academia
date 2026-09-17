@@ -1,0 +1,65 @@
+# Configuración común a todos los perfiles. Nada de secretos aquí: van por variable de
+# entorno (ver application-local.yml para desarrollo y el perfil de servidor, aún no creado).
+spring:
+  application:
+    name: academia-backend
+
+  jpa:
+    # Regla no negociable: el esquema lo define Flyway, nunca Hibernate.
+    hibernate:
+      ddl-auto: validate
+    # Evita que la sesión de Hibernate quede abierta durante el renderizado de la vista.
+    # Aquí no hay vistas server-side (la API es JSON puro), pero dejarlo en `true` esconde
+    # querys N+1 que solo se disparan al serializar la respuesta.
+    open-in-view: false
+    properties:
+      hibernate:
+        # Las columnas TIMESTAMPTZ se comparan siempre en UTC, sin depender de la zona
+        # horaria del servidor donde corra la aplicación.
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+
+  servlet:
+    multipart:
+      # Límite de subida de documentos (docs/diseno-api.md sección 5.7). Superarlo se
+      # traduce en 413 desde GlobalExceptionHandler.
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  servlet:
+    session:
+      cookie:
+        # Nombre de cookie explícito: es el que documenta docs/diseno-api.md sección 2.1
+        # (por defecto el contenedor usaría JSESSIONID).
+        name: SESSION
+        http-only: true
+        same-site: strict
+        # Solo viaja por HTTPS. En application-local.yml se relaja porque el desarrollo
+        # local no sirve por TLS; en cualquier otro perfil se mantiene en true.
+        secure: true
+  error:
+    # Nunca exponer mensaje, stacktrace ni detalles de binding: todo pasa por
+    # GlobalExceptionHandler con ProblemDetail (regla no negociable nº6).
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

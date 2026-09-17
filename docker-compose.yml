@@ -1,0 +1,58 @@
+# Infraestructura de desarrollo local para el backend.
+# Uso: docker compose up -d
+#
+# Credenciales con valor por defecto pensado solo para desarrollo local; ninguna de estas
+# variables se usa en servidor. Para cambiarlas sin tocar este fichero, crea un `.env` en la
+# raíz del repositorio (ver `.env.example`).
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-academia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-academia_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-academia}
+    ports:
+      - "5432:5432"
+    volumes:
+      - academia_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-academia} -d ${POSTGRES_DB:-academia}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Almacenamiento S3-compatible para el desarrollo local. En servidor, el mismo código habla
+  # con Cloudflare R2 (ver docs/modelo-datos.md sección 5.3 y backend/config/storage).
+  minio:
+    # MinIO retiró sus imágenes de Docker Hub; la distribución oficial ahora es quay.io.
+    image: quay.io/minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-academia}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-academia_dev_minio}
+    ports:
+      - "9000:9000" # API S3
+      - "9001:9001" # Consola web
+    volumes:
+      - academia_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Servidor SMTP de pruebas: captura los correos de avisos de caducidad sin enviarlos de
+  # verdad. Interfaz web en http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Interfaz web
+
+volumes:
+  academia_postgres_data:
+  academia_minio_data:

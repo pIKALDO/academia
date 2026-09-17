@@ -1,0 +1,39 @@
+name: Backend CI
+
+# Filtrado por ruta: un cambio en frontend/ no dispara este workflow, ni al revés
+# (ver .github/workflows/frontend.yml, todavía no creado).
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      # Java 21: la versión que usa el pom.xml en este corte (ver README, sección
+      # "Decisiones pendientes de revisar"). Subir a Java 25 aquí en cuanto se actualice allí.
+      - name: Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      # `verify`, no `test`: incluye los tests de integración (*IT) con Testcontainers,
+      # además de los unitarios (*Test). El runner de GitHub Actions trae Docker preinstalado.
+      - name: Compilar y ejecutar los tests
+        run: ./mvnw --batch-mode verify
