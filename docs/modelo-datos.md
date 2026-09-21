@@ -434,7 +434,7 @@ password_reset_tokens ──> users
 audit_log (sin relaciones)
 ```
 
-**11 tablas.** Ninguna de ellas habrá que rehacerla para incorporar el backlog.
+**12 tablas.** Ninguna de ellas habrá que rehacerla para incorporar el backlog.
 
 ---
 
