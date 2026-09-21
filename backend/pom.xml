@@ -9,15 +9,31 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.academia</groupId>
-	<artifactId>backend</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>backend</name>
+	<artifactId>academia-backend</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+	<name>academia-backend</name>
 	<description>Plataforma de gestion de la academia - backend</description>
 
 	<properties>
 		<java.version>21</java.version>
 		<aws-sdk.version>2.54.14</aws-sdk.version>
+		<springdoc.version>3.1.0</springdoc.version>
 	</properties>
+
+	<!-- BOM del SDK de AWS: fija una única propiedad (aws-sdk.version) y mantiene coherente
+	     todo el árbol de módulos transitivos (auth, regions, http-client...), en lugar de
+	     fijar la versión en cada dependencia awssdk suelta. -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${aws-sdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<!-- Web y validación -->
@@ -71,7 +87,6 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
-			<version>${aws-sdk.version}</version>
 		</dependency>
 
 		<!-- Observabilidad -->
@@ -84,7 +99,13 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>3.1.0</version>
+			<version>${springdoc.version}</version>
+		</dependency>
+
+		<!-- Plantillas de los correos de aviso de caducidad (corte 3) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 
 		<!-- Tests -->
