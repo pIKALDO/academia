@@ -44,7 +44,7 @@ dicen, dímelo antes de implementarlo en lugar de elegir por tu cuenta.
 ## Stack
 
 **Backend**
-- Java 25, Spring Boot 4.1 (verificar la versión vigente antes de fijarla)
+- Java 21 (LTS), Spring Boot 4.1 (verificar la versión vigente antes de fijarla)
 - PostgreSQL 17, JPA/Hibernate, Flyway
 - Spring Security con sesión y cookie
 - Almacenamiento S3-compatible: MinIO en local, Cloudflare R2 en servidor

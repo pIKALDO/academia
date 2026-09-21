@@ -23,8 +23,7 @@ jobs:
       - name: Descargar el código
         uses: actions/checkout@v4
 
-      # Java 21: la versión que usa el pom.xml en este corte (ver README, sección
-      # "Decisiones pendientes de revisar"). Subir a Java 25 aquí en cuanto se actualice allí.
+      # Java 21 (LTS): la misma versión fijada en pom.xml y en CLAUDE.md.
       - name: Configurar JDK
         uses: actions/setup-java@v4
         with:

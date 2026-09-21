@@ -20,7 +20,7 @@ Estos documentos son la fuente de verdad del proyecto.
 
 ## Requisitos
 
-- Java 21 (ver "Decisiones pendientes de revisar" más abajo)
+- Java 21 (LTS)
 - Docker y Docker Compose
 - Node.js (para `frontend/`, todavía no creado)
 
@@ -69,9 +69,6 @@ siguiente.
 
 ### Decisiones pendientes de revisar
 
-- **Java 21, no Java 25.** `CLAUDE.md` fija Java 25, pero la máquina de desarrollo solo
-  tiene JDK 21 instalado. Se decidió seguir con 21 por ahora; hay que revisar el pom.xml
-  (`java.version`) y este workflow de CI en cuanto se instale el JDK 25.
 - **Inmutabilidad de `audit_log` no reforzada de verdad.** La migración `V5` revoca
   `UPDATE`/`DELETE`, pero el rol que ejecuta Flyway es también el propietario de la tabla, y
   un propietario puede modificarla al margen de sus propios `GRANT`/`REVOKE`. Hace falta un
