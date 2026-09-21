@@ -9,9 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Verifica que Flyway aplica limpiamente las cinco migraciones contra un PostgreSQL 17 real
+ * Verifica que Flyway aplica limpiamente las seis migraciones contra un PostgreSQL 17 real
  * y que el esquema resultante contiene exactamente las tablas de fase 1
- * (docs/modelo-datos.md sección 8).
+ * (docs/modelo-datos.md sección 8). La sexta (V6) no añade tablas: crea los privilegios del
+ * rol de aplicación (ver AppRolePrivilegesIT).
  */
 class FlywayMigrationIT extends AbstractIntegrationTest {
 
@@ -19,12 +20,12 @@ class FlywayMigrationIT extends AbstractIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void aplica_las_cinco_migraciones_sin_fallos() {
+    void aplica_las_seis_migraciones_sin_fallos() {
         List<String> versionesAplicadas = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success = true ORDER BY installed_rank",
                 String.class);
 
-        assertThat(versionesAplicadas).containsExactly("1", "2", "3", "4", "5");
+        assertThat(versionesAplicadas).containsExactly("1", "2", "3", "4", "5", "6");
     }
 
     @Test

@@ -21,6 +21,12 @@ spring:
 
   flyway:
     enabled: true
+    placeholders:
+      # Nombre del rol de aplicación que usan los GRANT/REVOKE de V6__app_role.sql. No es un
+      # secreto (solo la contraseña lo es, y esa nunca pasa por una migración): se define
+      # aquí, no en application-local.yml, para que esté disponible también cuando Flyway
+      # corre en el perfil por defecto (tests con Testcontainers).
+      appDbUser: ${POSTGRES_APP_USER:academia_app}
 
   servlet:
     multipart:

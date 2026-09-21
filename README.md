@@ -42,14 +42,40 @@ La API queda escuchando en `http://localhost:8080`. Documentación interactiva e
 
 Consolas de la infraestructura local:
 
-| Servicio   | URL                            | Credenciales                        |
-|------------|---------------------------------|--------------------------------------|
-| PostgreSQL | `localhost:5432`, BD `academia` | `academia` / `academia_dev`          |
-| MinIO      | http://localhost:9001           | `academia` / `academia_dev_minio`    |
-| Mailpit    | http://localhost:8025           | (sin autenticación)                  |
+| Servicio   | URL                            | Credenciales                              |
+|------------|---------------------------------|--------------------------------------------|
+| PostgreSQL | `localhost:5432`, BD `academia` | propietario: `academia` / `academia_dev`   |
+| PostgreSQL | `localhost:5432`, BD `academia` | aplicación: `academia_app` / `academia_app_dev` |
+| MinIO      | http://localhost:9001           | `academia` / `academia_dev_minio`          |
+| Mailpit    | http://localhost:8025           | (sin autenticación)                        |
 
 Para cambiar estas credenciales sin tocar `docker-compose.yml`, copia `.env.example` a
 `.env` en la raíz del repositorio.
+
+## Dos roles de base de datos
+
+PostgreSQL tiene dos roles, no uno:
+
+- **`academia`** (propietario): el único que ejecuta las migraciones de Flyway. Es dueño de
+  todas las tablas.
+- **`academia_app`** (aplicación): el único con el que se conecta el backend en tiempo de
+  ejecución (`spring.datasource.*`). No tiene propiedad sobre ninguna tabla, y
+  `V6__app_role.sql` le revoca explícitamente `UPDATE`/`DELETE` sobre `audit_log`.
+
+**Por qué dos roles y no uno.** En PostgreSQL, el propietario de una tabla puede modificarla
+al margen de sus propios `GRANT`/`REVOKE`: si Flyway y la aplicación compartieran el mismo
+rol, el `REVOKE UPDATE, DELETE` sobre `audit_log` sería decorativo, no una restricción real.
+Separando ambos roles, la inmutabilidad del registro de auditoría la hace cumplir PostgreSQL
+mismo, no la disciplina de quien escriba el código de negocio. `AppRolePrivilegesIT` lo
+verifica conectándose directamente como `academia_app`.
+
+**Quién crea el rol de aplicación y quién le da permisos.** Son dos ficheros distintos, a
+propósito: `backend/db/init/01-create-app-role.sh` (montado en
+`docker-entrypoint-initdb.d`, se ejecuta una sola vez al crear el contenedor) crea el rol con
+su contraseña; `V6__app_role.sql` (versionado con Flyway) le concede los privilegios. La
+contraseña nunca pasa por una migración: aunque Flyway soporta sustituir placeholders, ese
+valor sigue quedando fijado en el fichero `.sql` ejecutado contra la base de datos, y un
+secreto no debería depender de que nadie mire el histórico de Flyway para encontrarlo.
 
 ## Tests
 
@@ -66,11 +92,3 @@ siguiente.
 
 - [x] Corte 0 — esqueleto ejecutable: infraestructura, migraciones, seguridad base,
       manejo de errores, paginación y auditoría.
-
-### Decisiones pendientes de revisar
-
-- **Inmutabilidad de `audit_log` no reforzada de verdad.** La migración `V5` revoca
-  `UPDATE`/`DELETE`, pero el rol que ejecuta Flyway es también el propietario de la tabla, y
-  un propietario puede modificarla al margen de sus propios `GRANT`/`REVOKE`. Hace falta un
-  segundo rol de aplicación, sin propiedad sobre las tablas, para que la restricción sea
-  real (detalle en el comentario de `V5__audit_log.sql`).

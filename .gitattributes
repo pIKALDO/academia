@@ -1,0 +1,3 @@
+# Los scripts de shell corren dentro de contenedores Linux (docker-entrypoint-initdb.d).
+# Con CRLF el shebang queda como "#!/bin/sh\r" y el contenedor no puede ejecutarlos.
+*.sh text eol=lf

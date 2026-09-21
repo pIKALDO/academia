@@ -14,8 +14,19 @@ server:
 
 spring:
   datasource:
+    # Rol de aplicación: sin propiedad sobre las tablas, sin permiso de UPDATE/DELETE en
+    # audit_log (V6__app_role.sql). Es el que usa Hibernate/JdbcTemplate en tiempo de
+    # ejecución; nunca el propietario que ejecuta las migraciones.
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:academia}
-    username: ${POSTGRES_USER:academia}
+    username: ${POSTGRES_APP_USER:academia_app}
+    password: ${POSTGRES_APP_PASSWORD:academia_app_dev}
+
+  flyway:
+    # Rol propietario: el único que ejecuta las migraciones, incluidos los GRANT/REVOKE de
+    # V6 sobre el rol de aplicación. Credenciales propias porque spring.datasource.* ya no
+    # le pertenece a este rol.
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:academia}
+    user: ${POSTGRES_USER:academia}
     password: ${POSTGRES_PASSWORD:academia_dev}
 
   mail:

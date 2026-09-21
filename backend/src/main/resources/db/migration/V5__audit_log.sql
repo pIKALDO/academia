@@ -31,13 +31,8 @@ CREATE INDEX ix_audit_actor_time ON audit_log (actor_user_id, occurred_at DESC);
 -- Solo inserción: se revoca UPDATE y DELETE sobre la tabla al rol de aplicación de
 -- PostgreSQL. Un registro que se puede modificar no prueba nada.
 --
--- CAVEAT pendiente de revisar: en este prototipo el rol que ejecuta Flyway es el mismo
--- que usa la aplicación en tiempo de ejecución (un único usuario en docker-compose), y ese
--- rol es el propietario de la tabla. En PostgreSQL el propietario de una tabla puede
--- UPDATE/DELETE siempre, al margen de lo que digan sus propios GRANT/REVOKE: este REVOKE
--- documenta la intención pero no la hace cumplir de verdad. Para que la restricción sea
--- efectiva hace falta un segundo rol de aplicación, sin propiedad sobre la tabla, que sea
--- el único con el que se conecta el backend en tiempo de ejecución (Flyway seguiría usando
--- el rol propietario). Se deja fuera de este corte para no meter una segunda credencial en
--- docker-compose sin que se haya pedido explícitamente.
-REVOKE UPDATE, DELETE ON audit_log FROM CURRENT_USER;
+-- El REVOKE no va aquí, sino en V6__app_role.sql: revocarlo sobre el rol que ejecuta esta
+-- misma migración no serviría de nada, porque en PostgreSQL el propietario de una tabla
+-- puede modificarla al margen de lo que digan sus propios GRANT/REVOKE. La restricción solo
+-- es real contra un segundo rol, sin propiedad sobre la tabla, que es el que usa la
+-- aplicación en tiempo de ejecución.

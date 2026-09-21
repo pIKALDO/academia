@@ -10,13 +10,20 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
+      # Rol propietario: crea el esquema (vía Flyway) y es dueño de todas las tablas.
       POSTGRES_USER: ${POSTGRES_USER:-academia}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-academia_dev}
       POSTGRES_DB: ${POSTGRES_DB:-academia}
+      # Rol de aplicación: sin propiedad sobre las tablas, es el único con el que se conecta
+      # el backend en tiempo de ejecución. Lo crea backend/db/init/01-create-app-role.sh en
+      # el primer arranque; sus privilegios los gestiona V6__app_role.sql.
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-academia_app}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-academia_app_dev}
     ports:
       - "5432:5432"
     volumes:
       - academia_postgres_data:/var/lib/postgresql/data
+      - ./backend/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-academia} -d ${POSTGRES_DB:-academia}"]
       interval: 5s
