@@ -261,8 +261,8 @@ CREATE TABLE housing_info (
    tabla, el filtrado se hace campo a campo al construir el DTO, que es exactamente donde se cuelan
    los fallos.
 2. **Establece el patrón para `medical_data`.** Cuando (y si) llegue, entra como una tabla 1:1 más,
-   sin tocar nada existente. Ese es el motivo por el que insistí en no meter datos de salud como
-   columnas sueltas.
+   sin tocar nada existente. Ese es el motivo por el que no se meten datos de salud como columnas
+   sueltas.
 3. **Mantiene `students` legible.** La entidad central se consulta en cada listado; no conviene
    arrastrar campos que casi nunca se usan.
 
@@ -393,11 +393,24 @@ una sola consulta indexada, sin recorrer todas las entidades relacionadas.
 **Clave numérica secuencial y no UUID**, porque esta tabla nunca se expone en una URL y crece mucho
 más que las demás: aquí el orden de inserción sí importa para el rendimiento.
 
-**Solo inserción.** Se revoca `UPDATE` y `DELETE` sobre la tabla al rol de aplicación de PostgreSQL.
-Un registro que se puede modificar no prueba nada.
+**Solo inserción, garantizado con dos roles de base de datos.** Un registro que se puede
+modificar no prueba nada. Pero un `REVOKE` no basta por sí solo: en PostgreSQL, el propietario
+de una tabla puede modificarla al margen de sus propios `GRANT` y `REVOKE`. Si Flyway y la
+aplicación usaran el mismo rol, la restricción sería decorativa.
 
-Se escribe desde un aspecto (`@Around`) sobre los servicios, no llamando al logger en cada método:
-así no se olvida ninguno.
+Por eso hay dos roles:
+
+- **`academia`** (propietario): ejecuta las migraciones de Flyway. Nunca lo usa la aplicación
+  en tiempo de ejecución.
+- **`academia_app`** (aplicación): el que usa el datasource. No es propietario de ninguna tabla.
+  Tiene `SELECT` e `INSERT` sobre `audit_log`, pero no `UPDATE` ni `DELETE`.
+
+`ALTER DEFAULT PRIVILEGES` hace que las tablas creadas en migraciones futuras concedan sus
+permisos a `academia_app` automáticamente. Un test de integración se conecta como
+`academia_app` y verifica que no puede modificar ni borrar registros de auditoría.
+
+Se escribe desde un aspecto (`@AfterReturning`) sobre los servicios, no llamando al logger en cada
+método: así no se olvida ninguno, y solo se registran las operaciones que terminan sin error.
 
 ---
 
@@ -446,6 +459,7 @@ V2__students_and_guardians.sql
 V3__profile_blocks.sql
 V4__documents.sql
 V5__audit_log.sql
+V6__app_role.sql          privilegios del rol de aplicación
 ```
 
 Una migración por bloque funcional y no una sola inicial gigante: facilita revisar el historial y
