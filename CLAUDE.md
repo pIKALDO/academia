@@ -223,3 +223,6 @@ configurables por campo, informes, pagos.
 
 `docs/modelo-datos.md` reserva el hueco de estas tablas en el diseño, pero no se
 crean sus migraciones.
+
+
+- Al cerrar cada corte, actualiza docs/PROGRESO.md antes del commit.
