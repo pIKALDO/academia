@@ -411,7 +411,12 @@ corte 2: almacenamiento S3/MinIO, `PUT /students/{id}/photo` + `photoUrl` prefir
     (fallo explícito, no un admin con contraseña adivinable).
 - Perfil de servidor (mencionado como "aún no creado" en el comentario de
   `application.yml`) no existe todavía — se añadirá cuando toque desplegar contra
-  Cloudflare R2 y la base de datos de producción.
+  Cloudflare R2 y la base de datos de producción. **Al crearlo, el de producción (datos
+  reales) debe llevar `springdoc.api-docs.enabled: false` y `springdoc.swagger-ui.enabled:
+  false`**, las dos: apagar solo la interfaz deja `/v3/api-docs` sirviendo el contrato. Un
+  despliegue de demostración con datos inventados puede mantener Swagger (README, "Swagger
+  según el entorno"; docs/diseno-api.md sección 10). Conviene un test que lo verifique con
+  el perfil de producción activo: `/v3/api-docs` y `/swagger-ui.html` → 404.
 - Verificación en navegador real del flujo de login/recarga/logout del corte web 1 (ver
   arriba) — solo probado por `curl` en esta máquina.
 - `frontend/` no tiene todavía pantallas de `students` ni `documents`: fuera de alcance del
