@@ -125,6 +125,606 @@
         "tags" : [ "Autenticación" ]
       }
     },
+    "/api/v1/emergency-contacts/{id}" : {
+      "delete" : {
+        "operationId" : "deleteEmergencyContact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Contactos de emergencia" ]
+      },
+      "patch" : {
+        "operationId" : "updateEmergencyContact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateEmergencyContactRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmergencyContactAdminDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Contactos de emergencia" ]
+      }
+    },
+    "/api/v1/guardians" : {
+      "get" : {
+        "operationId" : "listGuardians",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseGuardianDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tutores" ]
+      },
+      "post" : {
+        "operationId" : "createGuardian",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateGuardianRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GuardianDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tutores" ]
+      }
+    },
+    "/api/v1/guardians/{id}" : {
+      "get" : {
+        "operationId" : "getGuardian",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GuardianDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tutores" ]
+      },
+      "patch" : {
+        "operationId" : "updateGuardian",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateGuardianRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GuardianDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tutores" ]
+      }
+    },
+    "/api/v1/students" : {
+      "get" : {
+        "operationId" : "listStudents",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseStudentListDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      },
+      "post" : {
+        "operationId" : "createStudent",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateStudentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StudentAdminDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      }
+    },
+    "/api/v1/students/{id}" : {
+      "delete" : {
+        "operationId" : "deleteStudent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      },
+      "get" : {
+        "operationId" : "getStudent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StudentDetailDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      },
+      "patch" : {
+        "operationId" : "updateStudent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateStudentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StudentAdminDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      }
+    },
+    "/api/v1/students/{id}/education" : {
+      "put" : {
+        "operationId" : "replaceEducation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EducationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EducationDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      }
+    },
+    "/api/v1/students/{id}/housing" : {
+      "put" : {
+        "operationId" : "replaceHousing",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/HousingRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HousingDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      }
+    },
+    "/api/v1/students/{id}/sports-profile" : {
+      "put" : {
+        "operationId" : "replaceSportsProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SportsProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SportsProfileDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      }
+    },
+    "/api/v1/students/{studentId}/emergency-contacts" : {
+      "get" : {
+        "operationId" : "listEmergencyContacts",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "studentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseEmergencyContactDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Contactos de emergencia" ]
+      },
+      "post" : {
+        "operationId" : "createEmergencyContact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "studentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateEmergencyContactRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmergencyContactAdminDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Contactos de emergencia" ]
+      }
+    },
+    "/api/v1/students/{studentId}/guardians/{guardianId}" : {
+      "delete" : {
+        "operationId" : "unlinkStudentGuardian",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "studentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "guardianId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tutores" ]
+      },
+      "put" : {
+        "operationId" : "linkStudentGuardian",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "studentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "guardianId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StudentGuardianLinkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StudentGuardianLinkDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Tutores" ]
+      }
+    },
     "/api/v1/users" : {
       "get" : {
         "operationId" : "list",
@@ -342,6 +942,131 @@
         },
         "required" : [ "newPassword", "token" ]
       },
+      "CreateEmergencyContactRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "notes" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "priority" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 99,
+            "minimum" : 1
+          },
+          "relationship" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "name", "phone" ]
+      },
+      "CreateGuardianRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "firstName" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "lastName" : {
+            "type" : "string",
+            "maxLength" : 150,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "firstName", "lastName" ]
+      },
+      "CreateStudentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "addressLine" : {
+            "type" : "string",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "city" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "country" : {
+            "type" : "string",
+            "pattern" : "[A-Z]{2}"
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "enrolledAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "firstName" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "lastName" : {
+            "type" : "string",
+            "maxLength" : 150,
+            "minLength" : 0
+          },
+          "nationality" : {
+            "type" : "string",
+            "pattern" : "[A-Z]{2}"
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "postalCode" : {
+            "type" : "string",
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
+          }
+        },
+        "required" : [ "firstName", "lastName" ]
+      },
       "CreateUserRequest" : {
         "type" : "object",
         "properties" : {
@@ -362,6 +1087,179 @@
           }
         },
         "required" : [ "displayName", "email", "role" ]
+      },
+      "EducationDto" : {
+        "type" : "object",
+        "properties" : {
+          "grade" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "scheduleNotes" : {
+            "type" : "string"
+          },
+          "schoolName" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "EducationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "grade" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "scheduleNotes" : {
+            "type" : "string"
+          },
+          "schoolName" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }
+      },
+      "EmergencyContactAdminDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "priority" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "relationship" : {
+            "type" : "string"
+          }
+        }
+      },
+      "EmergencyContactDto" : {
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/EmergencyContactAdminDto"
+        }, {
+          "$ref" : "#/components/schemas/EmergencyContactGuardianDto"
+        } ]
+      },
+      "EmergencyContactGuardianDto" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "relationship" : {
+            "type" : "string"
+          }
+        }
+      },
+      "GuardianDto" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
+      "HousingDto" : {
+        "type" : "object",
+        "properties" : {
+          "addressLine" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "responsibleName" : {
+            "type" : "string"
+          },
+          "responsiblePhone" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "HousingRequest" : {
+        "type" : "object",
+        "properties" : {
+          "addressLine" : {
+            "type" : "string",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "city" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "responsibleName" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "responsiblePhone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          }
+        }
       },
       "LoginRequest" : {
         "type" : "object",
@@ -396,6 +1294,48 @@
           "totalPages" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "PagedResponseEmergencyContactDto" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EmergencyContactDto"
+            }
+          },
+          "page" : {
+            "$ref" : "#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "PagedResponseGuardianDto" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/GuardianDto"
+            }
+          },
+          "page" : {
+            "$ref" : "#/components/schemas/PageInfo"
+          }
+        }
+      },
+      "PagedResponseStudentListDto" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StudentListDto"
+            }
+          },
+          "page" : {
+            "$ref" : "#/components/schemas/PageInfo"
           }
         }
       },
@@ -438,6 +1378,490 @@
           }
         },
         "required" : [ "email" ]
+      },
+      "SportsProfileDto" : {
+        "type" : "object",
+        "properties" : {
+          "coachNotes" : {
+            "type" : "string"
+          },
+          "dominantHand" : {
+            "type" : "string",
+            "enum" : [ "RIGHT", "LEFT", "AMBIDEXTROUS" ]
+          },
+          "goals" : {
+            "type" : "string"
+          },
+          "history" : {
+            "type" : "string"
+          },
+          "level" : {
+            "type" : "string"
+          },
+          "previousClub" : {
+            "type" : "string"
+          },
+          "ranking" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "SportsProfileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "coachNotes" : {
+            "type" : "string"
+          },
+          "dominantHand" : {
+            "type" : "string",
+            "enum" : [ "RIGHT", "LEFT", "AMBIDEXTROUS" ]
+          },
+          "goals" : {
+            "type" : "string"
+          },
+          "history" : {
+            "type" : "string"
+          },
+          "level" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "previousClub" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "ranking" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          }
+        }
+      },
+      "StudentAdminAddress" : {
+        "type" : "object",
+        "properties" : {
+          "city" : {
+            "type" : "string"
+          },
+          "country" : {
+            "type" : "string"
+          },
+          "line" : {
+            "type" : "string"
+          },
+          "postalCode" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StudentAdminContact" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/StudentAdminAddress"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StudentAdminDto" : {
+        "type" : "object",
+        "properties" : {
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "contact" : {
+            "$ref" : "#/components/schemas/StudentAdminContact"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "education" : {
+            "$ref" : "#/components/schemas/EducationDto"
+          },
+          "emergencyContacts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EmergencyContactAdminDto"
+            }
+          },
+          "enrolledAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "guardians" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StudentAdminLinkedGuardian"
+            }
+          },
+          "housing" : {
+            "$ref" : "#/components/schemas/HousingDto"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "nationality" : {
+            "type" : "string"
+          },
+          "sportsProfile" : {
+            "$ref" : "#/components/schemas/SportsProfileDto"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "StudentAdminLinkedGuardian" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "hasAccess" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "isPrimary" : {
+            "type" : "boolean"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "relationship" : {
+            "type" : "string",
+            "enum" : [ "FATHER", "MOTHER", "LEGAL_GUARDIAN", "OTHER" ]
+          }
+        }
+      },
+      "StudentDetailDto" : {
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/StudentAdminDto"
+        }, {
+          "$ref" : "#/components/schemas/StudentGuardianDto"
+        } ]
+      },
+      "StudentGuardianContact" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StudentGuardianDto" : {
+        "type" : "object",
+        "properties" : {
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "contact" : {
+            "$ref" : "#/components/schemas/StudentGuardianContact"
+          },
+          "education" : {
+            "$ref" : "#/components/schemas/StudentGuardianEducation"
+          },
+          "emergencyContacts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EmergencyContactGuardianDto"
+            }
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "guardians" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StudentGuardianLinkedGuardian"
+            }
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "nationality" : {
+            "type" : "string"
+          },
+          "sportsProfile" : {
+            "$ref" : "#/components/schemas/StudentGuardianSportsProfile"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
+          }
+        }
+      },
+      "StudentGuardianEducation" : {
+        "type" : "object",
+        "properties" : {
+          "grade" : {
+            "type" : "string"
+          },
+          "schoolName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StudentGuardianLinkDto" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "guardianId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "hasAccess" : {
+            "type" : "boolean"
+          },
+          "isPrimary" : {
+            "type" : "boolean"
+          },
+          "relationship" : {
+            "type" : "string",
+            "enum" : [ "FATHER", "MOTHER", "LEGAL_GUARDIAN", "OTHER" ]
+          },
+          "studentId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
+      "StudentGuardianLinkRequest" : {
+        "type" : "object",
+        "properties" : {
+          "hasAccess" : {
+            "type" : "boolean"
+          },
+          "isPrimary" : {
+            "type" : "boolean"
+          },
+          "relationship" : {
+            "type" : "string",
+            "enum" : [ "FATHER", "MOTHER", "LEGAL_GUARDIAN", "OTHER" ]
+          }
+        },
+        "required" : [ "hasAccess", "isPrimary", "relationship" ]
+      },
+      "StudentGuardianLinkedGuardian" : {
+        "type" : "object",
+        "properties" : {
+          "firstName" : {
+            "type" : "string"
+          },
+          "isPrimary" : {
+            "type" : "boolean"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "relationship" : {
+            "type" : "string",
+            "enum" : [ "FATHER", "MOTHER", "LEGAL_GUARDIAN", "OTHER" ]
+          }
+        }
+      },
+      "StudentGuardianSportsProfile" : {
+        "type" : "object",
+        "properties" : {
+          "dominantHand" : {
+            "type" : "string",
+            "enum" : [ "RIGHT", "LEFT", "AMBIDEXTROUS" ]
+          },
+          "goals" : {
+            "type" : "string"
+          },
+          "level" : {
+            "type" : "string"
+          },
+          "previousClub" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StudentListDto" : {
+        "type" : "object",
+        "properties" : {
+          "firstName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
+          }
+        }
+      },
+      "UpdateEmergencyContactRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 1
+          },
+          "notes" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 1
+          },
+          "priority" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 99,
+            "minimum" : 1
+          },
+          "relationship" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          }
+        }
+      },
+      "UpdateGuardianRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "firstName" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 1
+          },
+          "lastName" : {
+            "type" : "string",
+            "maxLength" : 150,
+            "minLength" : 1
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
+      "UpdateStudentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "addressLine" : {
+            "type" : "string",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "city" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "country" : {
+            "type" : "string",
+            "pattern" : "[A-Z]{2}"
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "enrolledAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "firstName" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 1
+          },
+          "lastName" : {
+            "type" : "string",
+            "maxLength" : 150,
+            "minLength" : 1
+          },
+          "nationality" : {
+            "type" : "string",
+            "pattern" : "[A-Z]{2}"
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "postalCode" : {
+            "type" : "string",
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
+          }
+        }
       },
       "UpdateUserRequest" : {
         "type" : "object",

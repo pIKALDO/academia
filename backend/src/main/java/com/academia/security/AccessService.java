@@ -1,9 +1,11 @@
 package com.academia.security;
 
+import com.academia.students.StudentEntity;
 import com.academia.users.AcademiaUserPrincipal;
 import com.academia.users.UserRole;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,41 +18,98 @@ import org.springframework.stereotype.Component;
  *
  * <pre>{@code @PreAuthorize("@access.canViewStudent(#studentId)")}</pre>
  *
+ * Dos tipos de regla, según qué deba pasar al denegar (docs/diseno-api.md sección 3.1):
+ * <ul>
+ *   <li>Visibilidad ({@link #canViewStudent}): devuelve {@link StudentAccessDecision}, que
+ *       distingue "ocultar" (404) de "prohibir" (403). Va acompañada de
+ *       {@code @HandleAuthorizationDenied(handlerClass = HideStudentWhenNotVisible.class)}.</li>
+ *   <li>Operación ({@link #canEditStudent}, {@link #canManageGuardians}...): {@code boolean},
+ *       403 al denegar. Solo dependen del rol, así que la respuesta es la misma con cualquier
+ *       id —propio, ajeno o inventado— y no revela si existe.</li>
+ * </ul>
+ *
  * Cada regla de este componente tiene su propio test (docs/diseno-api.md sección 3.2): es
  * el núcleo del proyecto.
- *
- * {@link StudentAccessRepository} todavía no tiene ninguna implementación: llega con el
- * módulo de estudiantes/tutores. Hasta entonces, {@code studentAccessRepository} está vacío
- * y las reglas que dependen de él deniegan por defecto en lugar de lanzar: un fallo en la
- * capa de autorización tiene que cerrar la puerta, no romper la petición.
  */
 @Component("access")
 public class AccessService {
 
-    private final Optional<StudentAccessRepository> studentAccessRepository;
+    private final StudentAccessRepository studentAccessRepository;
 
-    public AccessService(Optional<StudentAccessRepository> studentAccessRepository) {
+    public AccessService(StudentAccessRepository studentAccessRepository) {
         this.studentAccessRepository = studentAccessRepository;
     }
 
-    public boolean canViewStudent(UUID studentId) {
+    /**
+     * ADMIN ve todos; GUARDIAN solo los vinculados con {@code has_access}, y el resto se le
+     * oculta; STUDENT no tiene acceso al módulo en fase 1 (portal del estudiante, fase 2), y
+     * se le prohíbe sin consultar el id.
+     */
+    public StudentAccessDecision canViewStudent(UUID studentId) {
         return currentPrincipal().map(principal -> switch (principal.role()) {
-            case ADMIN -> true;
-            case GUARDIAN -> checkGuardianAccess(studentId, principal.userId());
-            case STUDENT -> checkStudentAccess(studentId, principal.userId());
-        }).orElse(false);
+            case ADMIN -> StudentAccessDecision.GRANTED;
+            case GUARDIAN -> studentAccessRepository.isAccessibleByGuardian(studentId, principal.userId())
+                    ? StudentAccessDecision.GRANTED
+                    : StudentAccessDecision.HIDDEN;
+            case STUDENT -> StudentAccessDecision.FORBIDDEN;
+        }).orElse(StudentAccessDecision.FORBIDDEN);
     }
 
-    /** PATCH /students/{id} es ADMIN únicamente (docs/diseno-api.md sección 5.3): resoluble
-     *  por completo sin esperar al módulo de estudiantes. */
+    /** GET /students: ADMIN y GUARDIAN; qué filas ve cada uno lo decide {@link #visibleStudents()}. */
+    public boolean canListStudents() {
+        return hasRole(UserRole.ADMIN) || hasRole(UserRole.GUARDIAN);
+    }
+
+    /**
+     * Filtro del listado para el usuario autenticado: el mismo predicado que
+     * {@link #canViewStudent} ({@link StudentAccessSpecifications#visibleToGuardian}), para
+     * que una familia no pueda encontrar en el listado lo que no puede abrir, ni al revés.
+     */
+    public Specification<StudentEntity> visibleStudents() {
+        return currentPrincipal().map(principal -> switch (principal.role()) {
+            case ADMIN -> Specification.<StudentEntity>unrestricted();
+            case GUARDIAN -> StudentAccessSpecifications.visibleToGuardian(principal.userId());
+            case STUDENT -> StudentAccessSpecifications.none();
+        }).orElse(StudentAccessSpecifications.none());
+    }
+
+    /**
+     * Qué representación de la ficha recibe el usuario: la de administración (con
+     * {@code coachNotes}, {@code housing}, contacto de los tutores y metadatos) solo ADMIN.
+     * Cualquier otro rol que llegue a ver la ficha recibe {@code StudentGuardianDto}, que
+     * no tiene esos campos (regla no negociable nº5).
+     */
+    public boolean canSeeInternalStudentData() {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /**
+     * PATCH/DELETE /students/{id}, PUT de bloques, alta y edición de contactos de emergencia:
+     * ADMIN únicamente (docs/diseno-api.md secciones 5.3 y 5.5).
+     */
     public boolean canEditStudent(UUID studentId) {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /** PATCH/DELETE /emergency-contacts/{id}: ADMIN únicamente (docs/diseno-api.md sección 5.5). */
+    public boolean canEditEmergencyContact(UUID emergencyContactId) {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /** POST /students: ADMIN únicamente. */
+    public boolean canCreateStudent() {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /** /guardians y el vínculo estudiante-tutor: ADMIN únicamente (docs/diseno-api.md sección 5.4). */
+    public boolean canManageGuardians() {
         return hasRole(UserRole.ADMIN);
     }
 
     public boolean canUploadDocument(UUID studentId) {
         return currentPrincipal().map(principal -> switch (principal.role()) {
             case ADMIN -> true;
-            case GUARDIAN -> checkGuardianAccess(studentId, principal.userId());
+            case GUARDIAN -> studentAccessRepository.isAccessibleByGuardian(studentId, principal.userId());
             case STUDENT -> false;
         }).orElse(false);
     }
@@ -63,18 +122,6 @@ public class AccessService {
     /** GET/POST/PATCH /users es ADMIN únicamente (docs/diseno-api.md sección 5.2). */
     public boolean canManageUsers() {
         return hasRole(UserRole.ADMIN);
-    }
-
-    private boolean checkGuardianAccess(UUID studentId, UUID guardianUserId) {
-        return studentAccessRepository
-                .map(repository -> repository.isAccessibleByGuardian(studentId, guardianUserId))
-                .orElse(false);
-    }
-
-    private boolean checkStudentAccess(UUID studentId, UUID studentUserId) {
-        return studentAccessRepository
-                .map(repository -> repository.isOwnStudent(studentId, studentUserId))
-                .orElse(false);
     }
 
     private boolean hasRole(UserRole role) {
