@@ -1,0 +1,30 @@
+@import '../../../shared/styles/buttons.css';
+@import '../../../shared/styles/forms.css';
+@import '../../../shared/styles/panel.css';
+
+.student-create {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--space-md);
+  color: var(--color-secondary);
+  font-size: var(--font-body-md-size);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.create-form .headline-md {
+  margin-top: var(--space-sm);
+}

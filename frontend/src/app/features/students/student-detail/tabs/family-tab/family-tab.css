@@ -1,0 +1,99 @@
+@import '../../../../../shared/styles/buttons.css';
+@import '../../../../../shared/styles/forms.css';
+@import '../../../../../shared/styles/panel.css';
+
+.family-tab {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-md);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .family-tab {
+    grid-template-columns: 1fr;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.guardian-list,
+.contact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.guardian-row,
+.contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-default);
+  flex-wrap: wrap;
+}
+
+.guardian-info,
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guardian-name,
+.contact-name {
+  font-size: var(--font-body-md-size);
+  font-weight: var(--font-body-md-medium-weight);
+  color: var(--color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.guardian-meta,
+.contact-meta {
+  font-size: var(--font-caption-size);
+  color: var(--color-on-surface-variant);
+}
+
+.badge-primary {
+  font-size: var(--font-label-md-size);
+  text-transform: uppercase;
+  letter-spacing: var(--font-label-md-tracking);
+  background: var(--badge-confirmed-bg);
+  color: var(--badge-confirmed-text);
+  border-radius: var(--radius-default);
+  padding: 1px var(--space-xs);
+}
+
+.guardian-actions,
+.contact-actions {
+  display: flex;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.add-panel {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}

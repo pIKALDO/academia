@@ -1,0 +1,67 @@
+@import '../../../shared/styles/buttons.css';
+@import '../../../shared/styles/panel.css';
+
+.student-detail {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--space-md);
+  color: var(--color-secondary);
+  font-size: var(--font-body-md-size);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.detail-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.detail-heading .headline-xl {
+  margin-bottom: var(--space-xs);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 1px solid var(--color-outline-variant);
+  margin-bottom: var(--space-lg);
+  overflow-x: auto;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-body-md-size);
+  font-weight: var(--font-body-md-medium-weight);
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tabs button:hover {
+  color: var(--color-on-surface);
+}
+
+.tabs button.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}

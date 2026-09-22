@@ -1,0 +1,91 @@
+<section class="students-list">
+  <header class="panel-header">
+    <div>
+      <h1 class="headline-xl">Estudiantes</h1>
+      <p class="subtitle">{{ totalElements() }} en total</p>
+    </div>
+    @if (isAdmin()) {
+      <a class="btn btn--primary" routerLink="/students/new">+ Añadir estudiante</a>
+    }
+  </header>
+
+  <div class="filters">
+    <input
+      type="search"
+      placeholder="Buscar por nombre o apellidos"
+      [formControl]="searchControl"
+    />
+    <select [formControl]="statusControl">
+      <option value="">Todos los estados</option>
+      <option value="PROSPECT">Prospecto</option>
+      <option value="ACTIVE">Activo</option>
+      <option value="INACTIVE">Inactivo</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <p class="empty-state">Cargando…</p>
+  } @else if (students().length === 0) {
+    <p class="empty-state">No hay estudiantes que coincidan con la búsqueda.</p>
+  } @else {
+    <table class="data-table desktop-only">
+      <thead>
+        <tr>
+          <th>Estudiante</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of students(); track s.id) {
+          <tr>
+            <td>
+              <a class="student-cell" [routerLink]="['/students', s.id]">
+                <app-avatar [firstName]="s.firstName" [lastName]="s.lastName" />
+                <span>{{ s.firstName }} {{ s.lastName }}</span>
+              </a>
+            </td>
+            <td><app-status-badge [status]="s.status" /></td>
+            <td class="actions-cell">
+              <a [routerLink]="['/students', s.id]" class="link">Ver ficha</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="card-list mobile-only">
+      @for (s of students(); track s.id) {
+        <a class="student-card" [routerLink]="['/students', s.id]">
+          <app-avatar [firstName]="s.firstName" [lastName]="s.lastName" size="lg" />
+          <div class="student-card-info">
+            <span class="student-card-name">{{ s.firstName }} {{ s.lastName }}</span>
+            <app-status-badge [status]="s.status" />
+          </div>
+        </a>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button
+          type="button"
+          class="btn btn--secondary btn--compact"
+          [disabled]="page() === 0"
+          (click)="goToPage(page() - 1)"
+        >
+          Anterior
+        </button>
+        <span>Página {{ page() + 1 }} de {{ totalPages() }}</span>
+        <button
+          type="button"
+          class="btn btn--secondary btn--compact"
+          [disabled]="page() + 1 >= totalPages()"
+          (click)="goToPage(page() + 1)"
+        >
+          Siguiente
+        </button>
+      </div>
+    }
+  }
+</section>

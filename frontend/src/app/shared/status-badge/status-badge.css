@@ -1,0 +1,27 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  height: var(--badge-height);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-default);
+  font-size: var(--font-label-md-size);
+  letter-spacing: var(--font-label-md-tracking);
+  text-transform: uppercase;
+  font-weight: var(--font-label-md-weight);
+  white-space: nowrap;
+}
+
+.status-badge--active {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
+}
+
+.status-badge--prospect {
+  background: var(--color-status-info-bg);
+  color: var(--color-status-info-text);
+}
+
+.status-badge--inactive {
+  background: var(--badge-unassigned-bg);
+  color: var(--badge-unassigned-text);
+}

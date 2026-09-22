@@ -1,0 +1,96 @@
+<section class="student-detail">
+  <a class="back-link" routerLink="/">← Estudiantes</a>
+
+  @if (loading()) {
+    <p class="empty-state">Cargando…</p>
+  } @else if (notFound()) {
+    <div class="panel">
+      <p class="empty-state">Estudiante no encontrado.</p>
+      <a class="btn btn--secondary" routerLink="/">Volver al listado</a>
+    </div>
+  } @else if (student(); as s) {
+    <header class="detail-header">
+      <div class="detail-heading">
+        <app-avatar [firstName]="s.firstName" [lastName]="s.lastName" size="lg" />
+        <div>
+          <h1 class="headline-xl">{{ s.firstName }} {{ s.lastName }}</h1>
+          <app-status-badge [status]="s.status" />
+        </div>
+      </div>
+      @if (isAdmin()) {
+        <button type="button" class="btn btn--destructive" (click)="confirmDelete()">
+          Eliminar estudiante
+        </button>
+      }
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === 'personal'"
+        (click)="activeTab.set('personal')"
+      >
+        Personales
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === 'familia'"
+        (click)="activeTab.set('familia')"
+      >
+        Familia
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === 'deportiva'"
+        (click)="activeTab.set('deportiva')"
+      >
+        Deportiva
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === 'estudios'"
+        (click)="activeTab.set('estudios')"
+      >
+        Estudios
+      </button>
+      @if (isAdminStudent(s)) {
+        <button
+          type="button"
+          role="tab"
+          [class.active]="activeTab() === 'alojamiento'"
+          (click)="activeTab.set('alojamiento')"
+        >
+          Alojamiento
+        </button>
+      }
+    </nav>
+
+    <div class="tab-content">
+      @switch (activeTab()) {
+        @case ('personal') {
+          <app-student-personal-tab
+            [student]="s"
+            [isAdmin]="isAdmin()"
+            (saved)="reload()"
+          />
+        }
+        @case ('familia') {
+          <app-student-family-tab [student]="s" [isAdmin]="isAdmin()" (saved)="reload()" />
+        }
+        @case ('deportiva') {
+          <app-student-sports-tab [student]="s" [isAdmin]="isAdmin()" (saved)="reload()" />
+        }
+        @case ('estudios') {
+          <app-student-education-tab [student]="s" [isAdmin]="isAdmin()" (saved)="reload()" />
+        }
+        @case ('alojamiento') {
+          <app-student-housing-tab [student]="s" [isAdmin]="isAdmin()" (saved)="reload()" />
+        }
+      }
+    </div>
+  }
+</section>

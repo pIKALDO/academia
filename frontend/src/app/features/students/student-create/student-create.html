@@ -1,0 +1,92 @@
+<section class="student-create">
+  <a class="back-link" routerLink="/">← Estudiantes</a>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h1 class="headline-lg">Alta de estudiante</h1>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="create-form">
+      <h2 class="headline-md">Datos personales</h2>
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Nombre *</span>
+          <input type="text" formControlName="firstName" />
+        </label>
+        <label class="field">
+          <span class="label">Apellidos *</span>
+          <input type="text" formControlName="lastName" />
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Fecha de nacimiento</span>
+          <input type="date" formControlName="birthDate" />
+        </label>
+        <label class="field">
+          <span class="label">Nacionalidad (ISO 3166-1, 2 letras)</span>
+          <input type="text" formControlName="nationality" placeholder="ES" maxlength="2" />
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Estado</span>
+          <select formControlName="status">
+            <option value="PROSPECT">Prospecto</option>
+            <option value="ACTIVE">Activo</option>
+            <option value="INACTIVE">Inactivo</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label">Fecha de alta</span>
+          <input type="date" formControlName="enrolledAt" />
+        </label>
+      </div>
+
+      <h2 class="headline-md">Contacto</h2>
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Teléfono</span>
+          <input type="tel" formControlName="phone" />
+        </label>
+        <label class="field">
+          <span class="label">Correo electrónico</span>
+          <input type="email" formControlName="email" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="label">Dirección</span>
+        <input type="text" formControlName="addressLine" />
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Ciudad</span>
+          <input type="text" formControlName="city" />
+        </label>
+        <label class="field">
+          <span class="label">Código postal</span>
+          <input type="text" formControlName="postalCode" />
+        </label>
+        <label class="field">
+          <span class="label">País (ISO 3166-1, 2 letras)</span>
+          <input type="text" formControlName="country" placeholder="ES" maxlength="2" />
+        </label>
+      </div>
+
+      @if (form.invalid && form.touched) {
+        <p class="error-text">Revisa los campos marcados antes de continuar.</p>
+      }
+
+      <div class="form-actions">
+        <a class="btn btn--secondary" routerLink="/">Cancelar</a>
+        <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+          {{ submitting() ? 'Creando…' : 'Crear estudiante' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

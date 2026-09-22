@@ -1,0 +1,9 @@
+@import '../../../../../shared/styles/buttons.css';
+@import '../../../../../shared/styles/forms.css';
+@import '../../../../../shared/styles/panel.css';
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}

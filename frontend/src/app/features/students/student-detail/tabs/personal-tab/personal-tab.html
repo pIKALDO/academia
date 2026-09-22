@@ -1,0 +1,143 @@
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="headline-md">Datos personales</h2>
+    @if (isAdmin() && !editing()) {
+      <button type="button" class="btn btn--secondary btn--compact" (click)="startEdit()">
+        Editar
+      </button>
+    }
+  </div>
+
+  @if (!editing()) {
+    <dl class="info-grid">
+      <div>
+        <dt>Nombre</dt>
+        <dd>{{ student().firstName }} {{ student().lastName }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de nacimiento</dt>
+        <dd>{{ student().birthDate || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Nacionalidad</dt>
+        <dd>{{ student().nationality || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Estado</dt>
+        <dd><app-status-badge [status]="student().status" /></dd>
+      </div>
+      @if (adminStudent(); as a) {
+        <div>
+          <dt>Fecha de alta</dt>
+          <dd>{{ a.enrolledAt || '—' }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Teléfono</dt>
+        <dd>{{ student().contact.phone || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Correo electrónico</dt>
+        <dd>{{ student().contact.email || '—' }}</dd>
+      </div>
+      @if (adminStudent(); as a) {
+        <div class="span-2">
+          <dt>Dirección</dt>
+          <dd>
+            {{ a.contact.address.line || '—' }}, {{ a.contact.address.postalCode || '' }}
+            {{ a.contact.address.city || '' }}
+            @if (a.contact.address.country) {
+              ({{ a.contact.address.country }})
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Alta en el sistema</dt>
+          <dd>{{ a.createdAt | date: 'short' }}</dd>
+        </div>
+        <div>
+          <dt>Última actualización</dt>
+          <dd>{{ a.updatedAt | date: 'short' }}</dd>
+        </div>
+      }
+    </dl>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Nombre *</span>
+          <input type="text" formControlName="firstName" />
+        </label>
+        <label class="field">
+          <span class="label">Apellidos *</span>
+          <input type="text" formControlName="lastName" />
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Fecha de nacimiento</span>
+          <input type="date" formControlName="birthDate" />
+        </label>
+        <label class="field">
+          <span class="label">Nacionalidad (2 letras)</span>
+          <input type="text" formControlName="nationality" maxlength="2" />
+        </label>
+        <label class="field">
+          <span class="label">Estado</span>
+          <select formControlName="status">
+            <option value="PROSPECT">Prospecto</option>
+            <option value="ACTIVE">Activo</option>
+            <option value="INACTIVE">Inactivo</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label">Fecha de alta</span>
+          <input type="date" formControlName="enrolledAt" />
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Teléfono</span>
+          <input type="tel" formControlName="phone" />
+        </label>
+        <label class="field">
+          <span class="label">Correo electrónico</span>
+          <input type="email" formControlName="email" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="label">Dirección</span>
+        <input type="text" formControlName="addressLine" />
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Ciudad</span>
+          <input type="text" formControlName="city" />
+        </label>
+        <label class="field">
+          <span class="label">Código postal</span>
+          <input type="text" formControlName="postalCode" />
+        </label>
+        <label class="field">
+          <span class="label">País (2 letras)</span>
+          <input type="text" formControlName="country" maxlength="2" />
+        </label>
+      </div>
+
+      @if (form.invalid && form.touched) {
+        <p class="error-text">Revisa los campos marcados antes de guardar.</p>
+      }
+
+      <div class="form-actions">
+        <button type="button" class="btn btn--secondary" (click)="cancel()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+          {{ submitting() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

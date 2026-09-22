@@ -1,0 +1,74 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+}
+
+.label {
+  font-size: var(--font-label-lg-size);
+  letter-spacing: var(--font-label-lg-tracking);
+  font-weight: var(--font-label-lg-weight);
+  color: var(--color-on-surface);
+}
+
+input,
+select,
+textarea {
+  height: var(--input-height);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-default);
+  padding: 0 var(--space-md);
+  font-size: var(--font-body-md-size);
+  font-family: var(--font-family-base);
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-lowest);
+}
+
+textarea {
+  height: auto;
+  min-height: 72px;
+  padding: var(--space-sm) var(--space-md);
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: var(--input-focus-ring);
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-body-md-size);
+  color: var(--color-on-surface);
+}
+
+.checkbox-field input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  height: auto;
+  accent-color: var(--color-primary);
+}
+
+.error-text {
+  color: var(--color-status-critical-text);
+  font-size: var(--font-caption-size);
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-md);
+}

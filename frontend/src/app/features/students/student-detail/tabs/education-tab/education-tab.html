@@ -1,0 +1,67 @@
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="headline-md">Estudios</h2>
+    @if (isAdmin() && !editing()) {
+      <button type="button" class="btn btn--secondary btn--compact" (click)="startEdit()">
+        Editar
+      </button>
+    }
+  </div>
+
+  @if (!editing()) {
+    @if (!education() && !isAdmin()) {
+      <p class="empty-state">Todavía no hay información de estudios registrada.</p>
+    } @else {
+      <dl class="info-grid">
+        <div>
+          <dt>Centro educativo</dt>
+          <dd>{{ education()?.schoolName || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Curso</dt>
+          <dd>{{ education()?.grade || '—' }}</dd>
+        </div>
+        @if (adminEducation(); as a) {
+          <div class="span-2">
+            <dt>Notas de horario</dt>
+            <dd>{{ a.scheduleNotes || '—' }}</dd>
+          </div>
+          <div class="span-2">
+            <dt>Notas</dt>
+            <dd>{{ a.notes || '—' }}</dd>
+          </div>
+        }
+      </dl>
+    }
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Centro educativo</span>
+          <input type="text" formControlName="schoolName" />
+        </label>
+        <label class="field">
+          <span class="label">Curso</span>
+          <input type="text" formControlName="grade" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="label">Notas de horario</span>
+        <textarea formControlName="scheduleNotes"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="label">Notas</span>
+        <textarea formControlName="notes"></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn--secondary" (click)="cancel()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+          {{ submitting() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>
