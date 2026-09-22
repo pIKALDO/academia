@@ -3,11 +3,14 @@ package com.academia.security;
 import java.util.UUID;
 
 /**
- * Las dos consultas de las que depende {@link AccessService} para resolver el acceso a un
- * estudiante (docs/diseno-api.md sección 3.2). ADMIN no necesita consulta: ve todos.
+ * La consulta de la que depende {@link AccessService} para resolver el acceso de un tutor a
+ * un estudiante (docs/diseno-api.md sección 3.2). ADMIN no necesita consulta: ve todos.
  *
- * La implementación (JPA o JdbcTemplate contra student_guardians / students) llega en el
- * corte en el que existan las entidades Student y Guardian.
+ * Interfaz y no uso directo de {@link JpaStudentAccessRepository}: {@code AccessServiceTest}
+ * prueba cada regla sin base de datos, con una implementación en memoria.
+ *
+ * La regla de STUDENT ("únicamente el suyo", {@code students.user_id}) no está: en fase 1 el
+ * rol STUDENT no tiene acceso al módulo de estudiantes (portal del estudiante, fase 2).
  */
 public interface StudentAccessRepository {
 
@@ -16,9 +19,4 @@ public interface StudentAccessRepository {
      * has_access = true.
      */
     boolean isAccessibleByGuardian(UUID studentId, UUID guardianUserId);
-
-    /**
-     * STUDENT → únicamente el suyo (students.user_id = usuario).
-     */
-    boolean isOwnStudent(UUID studentId, UUID studentUserId);
 }
