@@ -35,6 +35,16 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  # En application.yml (común) y no solo en application-local.yml: hace falta también en los
+  # tests con Testcontainers (perfil por defecto), aunque no haya ningún Mailpit escuchando
+  # ahí. Sin spring.mail.host no existe el bean JavaMailSender y el arranque falla por falta
+  # de dependencia (AuthMailService la necesita); con el bean presente pero sin servidor SMTP
+  # real, el intento de envío falla en tiempo de ejecución y AuthMailService ya lo captura y
+  # registra sin tumbar la petición.
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+
 server:
   servlet:
     session:
@@ -63,9 +73,23 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    # Sin esto, /actuator/health depende de que Mailpit esté arriba: un correo de aviso que
+    # no se pudo enviar ya se registra y se ignora (AuthMailService), así que tampoco tiene
+    # sentido que tumbe el healthcheck del propio servicio.
+    mail:
+      enabled: false
 
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+
+app:
+  # Base del front (Angular), para construir los enlaces de los correos de activación y
+  # recuperación de contraseña. Sin perfil de servidor todavía: el valor de producción
+  # llegará cuando exista.
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+  mail:
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@academia.local}

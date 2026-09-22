@@ -52,6 +52,26 @@ Consolas de la infraestructura local:
 Para cambiar estas credenciales sin tocar `docker-compose.yml`, copia `.env.example` a
 `.env` en la raíz del repositorio.
 
+**`.env` solo lo lee `docker compose`, no Maven.** El backend no carga `.env` por su cuenta:
+las variables tienen que estar exportadas en el entorno del propio proceso que ejecuta
+`./mvnw spring-boot:run`. Con los valores por defecto de `docker-compose.yml` esto no se nota
+(`application-local.yml` ya trae esos mismos valores como fallback), pero `ADMIN_EMAIL` y
+`ADMIN_PASSWORD` (ver siguiente sección) no tienen fallback a propósito, así que hace falta
+exportarlas antes de arrancar:
+
+```bash
+set -a && source .env && set +a
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+### Primer ADMIN
+
+Con la base de datos vacía no hay ninguna cuenta con la que entrar, y crear usuarios exige ya
+ser ADMIN. En el perfil `local`, si la tabla `users` no tiene ningún ADMIN, el backend crea uno
+al arrancar (`LocalAdminBootstrapper`) con el email y la contraseña de `ADMIN_EMAIL` /
+`ADMIN_PASSWORD` (ver `.env.example`) — nunca con un valor fijo en el código. Solo pasa una vez:
+si ya existe un ADMIN, no hace nada. No corre fuera del perfil `local`.
+
 ## Dos roles de base de datos
 
 PostgreSQL tiene dos roles, no uno:

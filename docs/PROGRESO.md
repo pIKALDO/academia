@@ -37,17 +37,86 @@ Incluye:
 Testcontainers (PostgreSQL efímero propio), así que no dependen de `docker-compose.yml` ni de
 `.env` para pasar — solo necesitan Docker corriendo.
 
+### Corte 1 — usuarios y autenticación
+
+Incluye:
+
+- `UserEntity`/`UserRepository`/`UserService`, con `UserRole` y `UserStatus`
+  (`PENDING_ACTIVATION`, `ACTIVE`, `DISABLED`). `AcademiaUserDetailsService` sustituye al
+  `UserDetailsService` en memoria de Spring Boot.
+- `AuthController`: `POST /auth/login` con `AuthenticationManager` propio (no `formLogin`, para
+  que la respuesta sea JSON normal en vez de una redirección), `GET /auth/me`, `POST /auth/logout`,
+  alta/confirmación de restablecimiento de contraseña y activación de cuenta con
+  `PasswordResetTokenEntity` (token de un solo uso, hash guardado, no el token en claro).
+- `UserController`: alta de usuarios (admin), listado, activar/desactivar.
+- `AuthMailService`: correos de activación y recuperación por Thymeleaf; un fallo de envío se
+  registra y no tumba la petición (el token ya quedó persistido).
+- Revocación inmediata de sesión: `SessionRegistry` + `maximumSessions(-1)`, para que desactivar
+  una cuenta expulse su sesión activa en la siguiente petición sin esperar a que caduque la
+  cookie (verificado por
+  `UserControllerIT.al_desactivar_un_usuario_su_sesion_activa_se_invalida_de_inmediato`).
+
+**Verificado en esta máquina:** `./mvnw verify` pasa en verde de forma estable — 3 ejecuciones
+consecutivas sin fallos (2026-09-22). Los `WARNING`/`ERROR` de Mailpit en el log de estas
+ejecuciones (`Connection refused: connect, port 1025`) son ruido esperado y no fallos: Mailpit
+no está levantado en esta sesión y `AuthMailService` ya está diseñado para no propagar ese
+fallo.
+
+#### Bugs de seguridad corregidos durante el corte 1
+
+Dos bugs de fondo en la base de seguridad heredada de corte 0, encontrados al llevar
+`AuthController`/`UserController` a tests de integración reales (no aparecían en
+`SecurityConfigIT`, que solo prueba rutas sin cuerpo de petición):
+
+1. **CSRF.** `CookieCsrfTokenRepository` necesitaba un filtro adicional
+   (`CsrfCookieWritingFilter`) para forzar la resolución perezosa del `CsrfToken` en cada
+   petición: sin leer el atributo, Spring Security nunca escribe la cookie `XSRF-TOKEN`, así
+   que el interceptor de Angular no tendría nada que reenviar. También se sustituyó el
+   `CsrfTokenRequestHandler` por defecto (`XorCsrfTokenRequestAttributeHandler`, que enmascara
+   el token) por `CsrfTokenRequestAttributeHandler` sin enmascarar, que es el patrón
+   "lee la cookie, reenvíala tal cual en `X-XSRF-TOKEN`" que hace un cliente SPA.
+2. **`AuthenticationException`/`AccessDeniedException` que no llegaban traducidas.** El
+   `AuthenticationEntryPoint`/`AccessDeniedHandler` de `SecurityConfig`
+   (`ProblemDetailSecurityHandlers`) solo intercepta estas excepciones cuando las lanza un
+   filtro (una petición sin sesión, o `AuthorizationFilter` al final de la cadena). Las que
+   lanza código que corre **dentro** de la invocación del controlador —el
+   `authenticationManager.authenticate()` manual de `AuthController.login`, o un
+   `@PreAuthorize` de un método de servicio llamado desde un controlador— quedan dentro de la
+   pila de `DispatcherServlet`, que las resuelve con sus propios `HandlerExceptionResolver`
+   antes de que puedan propagarse de vuelta al filtro. Sin un `@ExceptionHandler` explícito
+   para esos dos tipos, caían en el catch-all de `GlobalExceptionHandler` y salían como **500**
+   en vez de 401/403 — un login con credenciales incorrectas, o un usuario sin el rol
+   necesario, recibían "error interno" en lugar del código correcto. Se añadieron
+   `@ExceptionHandler(AuthenticationException.class)` y `@ExceptionHandler(AccessDeniedException.class)`
+   a `GlobalExceptionHandler`, reutilizando la misma construcción de `ProblemDetail` que ya
+   usaba `ProblemDetailSecurityHandlers` (ahora expuesta como métodos estáticos públicos), para
+   que el formato de la respuesta sea idéntico venga la excepción del filtro o del
+   controlador/servicio. Este bug afectaba potencialmente a cualquier `@PreAuthorize` de
+   `AccessService`, no solo al login: es el más serio de los dos.
+
+También se corrigió la causa de la intermitencia en `AuthControllerIT`/`UserControllerIT`
+(no es un bug de producción, sino de los propios tests): `AuthTestSupport` cacheaba el token
+CSRF en un campo `static`, y el bean `RestTestClient` autoconfigurado con
+`@AutoConfigureRestTestClient` es un singleton que conserva su cookie jar entre peticiones —y,
+al estar el contexto de Spring cacheado entre clases de test, entre clases enteras. La cookie
+`XSRF-TOKEN` de un test se colaba en el siguiente; la caché estática enmascaraba el síntoma en
+vez de arreglarlo, así que a veces el test seguía pasando con un token de otro test y a veces
+no. Se eliminó la caché estática y ambos `IT` ahora construyen un `RestTestClient` nuevo
+(`RestTestClient.bindToServer().baseUrl(...)`) en un `@BeforeEach`, sin depender del bean
+autoconfigurado: cada test parte de un cliente sin cookies. Dentro de un mismo test, el token
+CSRF obtenido una vez se reutiliza para todas las peticiones (incluida la de un segundo usuario,
+como en el test de revocación de sesión): el token no está ligado a la sesión ni al usuario, así
+que no hace falta pedir uno nuevo, y pedirlo fallaría de todos modos porque el cliente ya trae
+una cookie `XSRF-TOKEN` válida y el servidor no reenvía `Set-Cookie` para un valor que no ha
+cambiado.
+
 ## Corte actual y siguiente paso
 
-**Corte actual:** ninguno en marcha. Corte 0 cerrado.
+**Corte actual:** ninguno en marcha. Corte 1 cerrado.
 
-**Siguiente:** Corte 1 — usuarios y autenticación. No se ha empezado (ni entidades `User`, ni
-`AuthController`, ni lógica de login/sesión más allá del esqueleto de `SecurityConfig`).
-
-Primer paso concreto cuando se arranque: implementar `POST /auth/login` +
-`GET /auth/me` sobre la tabla `users` ya migrada en `V1`, con `AuthenticationManager` propio
-sustituyendo el `UserDetailsService` en memoria que genera Spring Boot por defecto (visible en
-los logs de arranque: "Using generated security password...").
+**Siguiente:** por decidir. Candidatos naturales según CLAUDE.md: `students` (fichas de
+estudiantes y bloques de ficha) o `guardians` (tutores y vínculos), ambos ya con migraciones en
+`V2`/`V3`.
 
 ## Decisiones tomadas que no están en los documentos de diseño
 
@@ -69,13 +138,26 @@ los logs de arranque: "Using generated security password...").
 - **Ya resuelto, no pendiente:** `ALTER DEFAULT PRIVILEGES` para `academia_app` — está en
   `V6__app_role.sql` (tablas y secuencias), contra lo que podría sugerir el contexto previo de
   la conversación.
-- **`.env` real pendiente de traer de la otra máquina.** No se ha generado uno en esta sesión
-  a petición explícita. Queda por comprobar en esta máquina, una vez esté el `.env`:
-  - `docker compose up -d` con las credenciales reales (se probó una vez con los valores por
-    defecto de `.env.example` y funcionó correctamente: los tres servicios — postgres, minio,
-    mailpit — arrancan sanos y Flyway valida las 6 migraciones contra ellos).
-  - `mvn spring-boot:run -Dspring-boot.run.profiles=local` arrancando contra esos servicios
-    (a diferencia de `verify`, esto sí depende del `.env`).
+- **Ya resuelto, no pendiente:** el `.env` ya existe en esta máquina (copia sin cambios de
+  `.env.example`, es un prototipo sin secretos reales). Verificado con `docker compose up -d`
+  (los tres servicios arrancan sanos) y `mvn spring-boot:run -Dspring-boot.run.profiles=local`
+  contra ellos: Flyway valida las 7 migraciones y `/actuator/health` responde `UP`.
+- **Alta del primer ADMIN.** Con la base de datos vacía no hay ninguna cuenta con la que
+  entrar (crear usuarios exige ya ser ADMIN, `@PreAuthorize("@access.canManageUsers()")`).
+  `LocalAdminBootstrapper` (`users`, `@Profile("local")`) crea uno al arrancar si
+  `existsByRole(ADMIN)` es falso, con `ADMIN_EMAIL`/`ADMIN_PASSWORD` de `.env` — sin valor por
+  defecto en `application-local.yml` a propósito, para que el arranque falle si no están
+  exportadas en vez de crear un admin con una contraseña fija conocida por cualquiera que lea
+  el repositorio. Va directo a `UserRepository`, no a `UserService.create`: ese método deja al
+  usuario en `PENDING_ACTIVATION` a la espera de un correo de activación, que no tiene sentido
+  para la primera cuenta. Verificado de extremo a extremo: arranque con `.env` exportado →
+  log de creación → `POST /auth/login` con esas credenciales devuelve `204`; un segundo
+  arranque no vuelve a crear el admin (idempotente).
+  - **Recordatorio para quien arranque en otra máquina:** `.env` solo lo lee
+    `docker compose`, no Maven — para que `ADMIN_EMAIL`/`ADMIN_PASSWORD` lleguen al backend
+    hace falta exportarlas antes de `./mvnw spring-boot:run` (`set -a && source .env && set +a`
+    en bash). Sin exportar, el arranque en local falla al no poder resolver el placeholder
+    (fallo explícito, no un admin con contraseña adivinable).
 - Perfil de servidor (mencionado como "aún no creado" en el comentario de
   `application.yml`) no existe todavía — se añadirá cuando toque desplegar contra
   Cloudflare R2 y la base de datos de producción.
