@@ -3,7 +3,8 @@ package com.academia.users;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.academia.support.AbstractIntegrationTest;
-import com.academia.users.AuthTestSupport.SesionAutenticada;
+import com.academia.support.AuthTestSupport;
+import com.academia.support.AuthTestSupport.SesionAutenticada;
 import com.academia.users.dto.ActivateAccountRequest;
 import com.academia.users.dto.LoginRequest;
 import com.academia.users.dto.PasswordResetConfirmRequest;
