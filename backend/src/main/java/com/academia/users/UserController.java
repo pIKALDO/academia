@@ -40,7 +40,7 @@ class UserController {
     }
 
     @GetMapping
-    PagedResponse<UserSummaryDto> list(
+    PagedResponse<UserSummaryDto> listUsers(
             @RequestParam(required = false) UserRole role,
             @RequestParam(required = false) UserStatus status,
             @RequestParam(defaultValue = "0") int page,
@@ -50,7 +50,7 @@ class UserController {
     }
 
     @PostMapping
-    ResponseEntity<UserDetailDto> create(@Valid @RequestBody CreateUserRequest request,
+    ResponseEntity<UserDetailDto> createUser(@Valid @RequestBody CreateUserRequest request,
             UriComponentsBuilder uriBuilder) {
         UserDetailDto created = userService.create(request);
         // El UriComponentsBuilder que inyecta Spring MVC parte del servlet mapping, no de la URL
@@ -60,23 +60,23 @@ class UserController {
     }
 
     @GetMapping("/{id}")
-    UserDetailDto get(@PathVariable UUID id) {
+    UserDetailDto getUser(@PathVariable UUID id) {
         return userService.get(id);
     }
 
     @PatchMapping("/{id}")
-    UserDetailDto update(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
+    UserDetailDto updateUser(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
         return userService.update(id, request);
     }
 
     @PostMapping("/{id}/disable")
-    ResponseEntity<Void> disable(@PathVariable UUID id) {
+    ResponseEntity<Void> disableUser(@PathVariable UUID id) {
         userService.disable(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/enable")
-    ResponseEntity<Void> enable(@PathVariable UUID id) {
+    ResponseEntity<Void> enableUser(@PathVariable UUID id) {
         userService.enable(id);
         return ResponseEntity.noContent().build();
     }
