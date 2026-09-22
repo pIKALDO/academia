@@ -5,6 +5,7 @@ import com.academia.users.UserRole;
 import com.academia.users.UserStatus;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /** Respuesta de {@code GET/POST/PATCH /users/{id}}: ficha completa para administración. */
 public record UserDetailDto(
@@ -13,7 +14,7 @@ public record UserDetailDto(
         String displayName,
         UserRole role,
         UserStatus status,
-        Instant lastLoginAt,
+        @Nullable Instant lastLoginAt,
         Instant createdAt,
         Instant updatedAt) {
 

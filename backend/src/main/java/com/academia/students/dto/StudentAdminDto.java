@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@code GET /students/{id}} con rol ADMIN (docs/diseno-api.md sección 4.1): la ficha
@@ -25,25 +26,29 @@ public record StudentAdminDto(
         UUID id,
         String firstName,
         String lastName,
-        LocalDate birthDate,
-        String nationality,
+        @Nullable LocalDate birthDate,
+        @Nullable String nationality,
         StudentStatus status,
-        LocalDate enrolledAt,
+        @Nullable LocalDate enrolledAt,
         Contact contact,
         List<LinkedGuardian> guardians,
         List<EmergencyContactAdminDto> emergencyContacts,
-        SportsProfileDto sportsProfile,
-        EducationDto education,
-        HousingDto housing,
+        @Nullable SportsProfileDto sportsProfile,
+        @Nullable EducationDto education,
+        @Nullable HousingDto housing,
         Instant createdAt,
         Instant updatedAt) implements StudentDetailDto {
 
     @Schema(name = "StudentAdminContact")
-    public record Contact(String phone, String email, Address address) {
+    public record Contact(@Nullable String phone, @Nullable String email, Address address) {
     }
 
     @Schema(name = "StudentAdminAddress")
-    public record Address(String line, String city, String postalCode, String country) {
+    public record Address(
+            @Nullable String line,
+            @Nullable String city,
+            @Nullable String postalCode,
+            @Nullable String country) {
     }
 
     @Schema(name = "StudentAdminLinkedGuardian")
@@ -54,8 +59,8 @@ public record StudentAdminDto(
             GuardianRelationship relationship,
             boolean isPrimary,
             boolean hasAccess,
-            String phone,
-            String email) {
+            @Nullable String phone,
+            @Nullable String email) {
 
         static LinkedGuardian from(StudentGuardianEntity link) {
             GuardianEntity guardian = link.getGuardian();

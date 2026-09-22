@@ -34,4 +34,11 @@ public class OpenApiConfig {
                                 .name("SESSION")))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName));
     }
+
+    // Registrado como bean para que springdoc lo recoja automáticamente (ModelConverters
+    // añade cada ModelConverter del contexto de Spring a la cadena de resolución de esquemas).
+    @Bean
+    ResponseSchemaModelConverter responseSchemaModelConverter() {
+        return new ResponseSchemaModelConverter();
+    }
 }
