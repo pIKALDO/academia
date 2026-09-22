@@ -53,9 +53,9 @@ class UserController {
     ResponseEntity<UserDetailDto> create(@Valid @RequestBody CreateUserRequest request,
             UriComponentsBuilder uriBuilder) {
         UserDetailDto created = userService.create(request);
-        // uriBuilder ya representa la URL de esta misma petición (POST /api/v1/users): solo
-        // hace falta añadir el id, no repetir el prefijo.
-        URI location = uriBuilder.path("/{id}").buildAndExpand(created.id()).toUri();
+        // El UriComponentsBuilder que inyecta Spring MVC parte del servlet mapping, no de la URL
+        // de esta petición: solo trae esquema, host y puerto. La ruta va completa.
+        URI location = uriBuilder.path("/api/v1/users/{id}").buildAndExpand(created.id()).toUri();
         return ResponseEntity.created(location).body(created);
     }
 

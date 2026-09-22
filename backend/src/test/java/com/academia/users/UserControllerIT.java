@@ -1,5 +1,7 @@
 package com.academia.users;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.academia.support.AbstractIntegrationTest;
 import com.academia.support.AuthTestSupport;
 import com.academia.support.AuthTestSupport.SesionAutenticada;
@@ -42,7 +44,8 @@ class UserControllerIT extends AbstractIntegrationTest {
                 .body(new CreateUserRequest("nuevo@example.com", UserRole.GUARDIAN, "Nuevo Usuario"))
                 .exchange()
                 .expectStatus().isCreated()
-                .expectHeader().exists("Location")
+                .expectHeader().value("Location", location -> assertThat(location)
+                        .matches("http://localhost:\\d+/api/v1/users/[0-9a-f-]{36}"))
                 .expectBody()
                 .jsonPath("$.status").isEqualTo("PENDING_ACTIVATION")
                 .jsonPath("$.email").isEqualTo("nuevo@example.com");
