@@ -3,18 +3,25 @@ package com.academia.users;
 import com.academia.support.AbstractIntegrationTest;
 import com.academia.users.AuthTestSupport.SesionAutenticada;
 import com.academia.users.dto.CreateUserRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-@AutoConfigureRestTestClient
 class UserControllerIT extends AbstractIntegrationTest {
 
-    @Autowired
+    @LocalServerPort
+    private int port;
+
     private RestTestClient restTestClient;
+
+    @BeforeEach
+    void crearClienteLimpio() {
+        restTestClient = RestTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
+    }
 
     @Autowired
     private UserRepository userRepository;
@@ -110,8 +117,12 @@ class UserControllerIT extends AbstractIntegrationTest {
     void al_desactivar_un_usuario_su_sesion_activa_se_invalida_de_inmediato() {
         SesionAutenticada admin = crearYAutenticarAdmin("admin5@example.com");
         crearUsuarioActivo("familia2@example.com", UserRole.GUARDIAN, "password-123");
-        String csrfFamilia = AuthTestSupport.obtenerTokenCsrf(restTestClient);
-        SesionAutenticada familia = AuthTestSupport.login(restTestClient, csrfFamilia, "familia2@example.com", "password-123");
+        // El token CSRF no es específico de usuario (CookieCsrfTokenRepository no lo liga a la
+        // sesión): el mismo cliente puede reutilizar el que ya obtuvo para el admin. Pedir uno
+        // nuevo aquí fallaría, porque el cliente ya presenta una cookie XSRF-TOKEN válida y el
+        // servidor no vuelve a enviar Set-Cookie para un valor que no ha cambiado.
+        SesionAutenticada familia =
+                AuthTestSupport.login(restTestClient, admin.csrfToken(), "familia2@example.com", "password-123");
 
         restTestClient.get().uri("/api/v1/auth/me")
                 .cookie("SESSION", familia.sessionCookie())

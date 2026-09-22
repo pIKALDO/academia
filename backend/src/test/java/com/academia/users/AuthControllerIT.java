@@ -10,18 +10,25 @@ import com.academia.users.dto.PasswordResetConfirmRequest;
 import com.academia.users.dto.PasswordResetRequest;
 import java.time.Duration;
 import java.time.Instant;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-@AutoConfigureRestTestClient
 class AuthControllerIT extends AbstractIntegrationTest {
 
-    @Autowired
+    @LocalServerPort
+    private int port;
+
     private RestTestClient restTestClient;
+
+    @BeforeEach
+    void crearClienteLimpio() {
+        restTestClient = RestTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
+    }
 
     @Autowired
     private UserRepository userRepository;
