@@ -14,6 +14,8 @@ interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     boolean existsByEmailIgnoreCase(String email);
 
+    boolean existsByRole(UserRole role);
+
     @Query("""
             SELECT u FROM UserEntity u
             WHERE (:role IS NULL OR u.role = :role)

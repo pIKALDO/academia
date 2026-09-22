@@ -29,6 +29,14 @@ spring:
     user: ${POSTGRES_USER:academia}
     password: ${POSTGRES_PASSWORD:academia_dev}
 
+app:
+  admin:
+    # Sin valor por defecto, a propósito (LocalAdminBootstrapper): si ADMIN_EMAIL/ADMIN_PASSWORD
+    # no están exportadas, el arranque falla en vez de crear un admin con una contraseña fija
+    # conocida por cualquiera que lea este fichero.
+    email: ${ADMIN_EMAIL}
+    password: ${ADMIN_PASSWORD}
+
 logging:
   level:
     com.academia: DEBUG
