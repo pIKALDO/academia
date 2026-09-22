@@ -1,5 +1,6 @@
 package com.academia.common.error;
 
+import com.academia.config.ProblemDetailSecurityHandlers;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
@@ -10,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -43,13 +47,30 @@ public class GlobalExceptionHandler {
                 ex.getMessage(), request);
     }
 
-    // No hay @ExceptionHandler aquí para AuthenticationException ni AccessDeniedException a
-    // propósito: Spring Security registra su propio HandlerExceptionResolver, con prioridad
-    // sobre este @RestControllerAdvice, que intercepta esos dos tipos vengan de donde vengan
-    // (un filtro, o un @PreAuthorize disparado dentro de un controlador o servicio) y los
-    // reenvía a ExceptionTranslationFilter. Un @ExceptionHandler para ellos aquí nunca se
-    // ejecutaría: es SecurityConfig quien construye esas dos respuestas
-    // (authenticationEntryPoint / accessDeniedHandler), con el mismo formato ProblemDetail.
+    // AuthenticationException/AccessDeniedException lanzadas desde un filtro (petición sin
+    // sesión, o AuthorizationFilter al final de la cadena) nunca llegan aquí: las captura
+    // ExceptionTranslationFilter y las resuelve con authenticationEntryPoint/accessDeniedHandler
+    // (SecurityConfig). Pero las que lanza código que se ejecuta DENTRO de la invocación del
+    // controlador —el authenticationManager.authenticate() manual de AuthController.login, o
+    // un @PreAuthorize de un método de servicio llamado desde un controlador— sí caen aquí:
+    // Spring MVC las resuelve con sus HandlerExceptionResolver antes de que puedan propagarse
+    // de vuelta al filtro. Sin estos dos @ExceptionHandler, ambas acababan en el catch-all de
+    // más abajo y salían como 500 en vez de 401/403. Reutilizan la misma construcción de
+    // ProblemDetail que ProblemDetailSecurityHandlers para que el formato no dependa de por
+    // qué camino haya venido la excepción.
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ProblemDetail> handleAuthentication(AuthenticationException ex, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetailSecurityHandlers.authenticationProblemDetail(ex, request);
+        if (problemDetail == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(HttpServletRequest request) {
+        return ProblemDetailSecurityHandlers.accessDeniedProblemDetail(request);
+    }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ProblemDetail handleMaxUploadSize(MaxUploadSizeExceededException ex, HttpServletRequest request) {
