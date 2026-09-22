@@ -6,6 +6,9 @@
 /out-tsc
 /bazel-out
 
+# Tipos generados desde docs/openapi.json (npm run generate:api-types, corre antes de build/test)
+/src/app/core/api/schema.d.ts
+
 # Node
 /node_modules
 npm-debug.log

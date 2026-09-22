@@ -167,16 +167,60 @@ de dar el corte por completamente cerrado.
 
 **Build y tests:** `ng build --configuration development` y `ng test` pasan en verde.
 
+### Contrato de la API — exportación de OpenAPI y generación de tipos (previo al corte 2)
+
+Incluye:
+
+- **`docs/openapi.json`** ahora se exporta como parte del build del backend:
+  `OpenApiSpecificationIT` (nuevo, en `com.academia.config`) extiende
+  `AbstractIntegrationTest` (mismo PostgreSQL de Testcontainers que el resto de la suite),
+  pide `/v3/api-docs` con `RestTestClient` y escribe la respuesta formateada en
+  `docs/openapi.json`. Se prefirió esto a `springdoc-openapi-maven-plugin` (que arrancaría la
+  app de verdad, contra una base de datos real, solo para generar el fichero) o a un test
+  unitario con contexto mínimo (no serviría: `ddl-auto: validate` exige un esquema real
+  aplicado por Flyway). Reutiliza infraestructura que ya existía para los tests de integración,
+  sin añadir un plugin ni un segundo mecanismo de arranque.
+  - `OpenApiConfig` fija `servers` a `[{ "url": "/" }]`: sin esto, springdoc infiere la URL del
+    puerto aleatorio de `RANDOM_PORT`, que cambia en cada ejecución y rompería la comparación de
+    CI aunque el contrato no hubiera cambiado. Verificado determinista: dos ejecuciones
+    consecutivas de `mvn verify` producen un `docs/openapi.json` idéntico byte a byte.
+- **`.github/workflows/backend.yml`**: paso nuevo tras `mvn verify` que hace
+  `git diff --exit-code -- docs/openapi.json`. Como el test de integración ya sobrescribió el
+  fichero durante `verify`, si el commiteado no coincide con el recién generado el paso falla y
+  el diff queda visible en los logs — cualquier ruptura del contrato aparece en la pull request.
+- **`frontend/package.json`**: script `generate:api-types` (`openapi-typescript
+  ../docs/openapi.json -o src/app/core/api/schema.d.ts`), enganchado con
+  `prestart`/`prebuild`/`pretest` para que `npm start`, `npm run build` y `npm test` regeneren
+  los tipos antes de arrancar/compilar — el frontend nunca sirve ni compila contra un contrato
+  desactualizado. `schema.d.ts` es generado, no se commitea (añadido a `.gitignore`).
+  - **`frontend/.npmrc`** con `legacy-peer-deps=true`: `openapi-typescript@7.13.0` declara
+    `peerDependencies.typescript: ^5.x` y el proyecto usa TypeScript 6.0.x. Sin esto, `npm ci`
+    falla con `ERESOLVE` en CI. Es una dependencia de desarrollo que solo parsea el JSON y
+    genera `.d.ts` (no se mete en la cadena de compilación de la app), así que el desajuste de
+    peer dependency es ruido, no un riesgo real — a vigilar en la próxima actualización de
+    `openapi-typescript` por si ya declara soporte para TS 6, momento en el que este `.npmrc`
+    podría retirarse.
+- `core/models/user.model.ts` (`UserProfile`) y los cuerpos de petición de `auth.service.ts` /
+  `session.service.ts` (`LoginRequest`, `PasswordResetRequest`, `PasswordResetConfirmRequest`,
+  `ActivateAccountRequest`) ahora son alias de `components['schemas'][...]` del fichero
+  generado, no interfaces escritas a mano.
+- **`.github/workflows/frontend.yml`**: `docs/openapi.json` añadido a los `paths` de disparo
+  (push y pull_request), para que un cambio de contrato sin tocar `frontend/` también dispare
+  esta CI y falle si rompe la compilación.
+
+**Verificado en esta máquina:** `mvn verify` (con Docker corriendo) genera y dos ejecuciones
+seguidas producen el mismo `docs/openapi.json`; `npm run build` y `npm test` regeneran
+`schema.d.ts` y compilan en verde con los tipos generados.
+
 ## Corte actual y siguiente paso
 
-**Corte actual:** ninguno en marcha. Corte web 1 cerrado (con la verificación en navegador
-real pendiente, ver arriba).
+**Corte actual:** ninguno en marcha. Corte web 1 y el contrato de API (arriba) cerrados, con la
+verificación en navegador real del corte web 1 todavía pendiente (ver arriba).
 
-**Siguiente:** por decidir. Candidatos naturales según CLAUDE.md: `students` (fichas de
-estudiantes y bloques de ficha) o `guardians` (tutores y vínculos), ambos ya con migraciones en
-`V2`/`V3`. En el front, cualquiera de los dos implica generar los tipos TypeScript desde
-`docs/openapi.json` (todavía no exportado: no hay `springdoc` corriendo contra endpoints de
-`students`/`documents`) y un servicio de API por dominio.
+**Siguiente:** corte 2, por decidir el dominio. Candidatos naturales según CLAUDE.md: `students`
+(fichas de estudiantes y bloques de ficha) o `guardians` (tutores y vínculos), ambos ya con
+migraciones en `V2`/`V3`. El mecanismo de contrato (`docs/openapi.json` + tipos generados) ya
+está listo para ese dominio: basta con implementar el endpoint y volver a generar.
 
 ## Decisiones tomadas que no están en los documentos de diseño
 

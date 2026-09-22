@@ -1,7 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { components } from '../api/schema';
 import { UserProfile } from '../models/user.model';
+
+type LoginRequest = components['schemas']['LoginRequest'];
 
 const API_BASE = '/api/v1/auth';
 
@@ -18,8 +21,9 @@ export class SessionService {
   constructor(private readonly http: HttpClient) {}
 
   login(email: string, password: string): Observable<void> {
+    const body: LoginRequest = { email, password };
     return this.http
-      .post<void>(`${API_BASE}/login`, { email, password }, { withCredentials: true })
+      .post<void>(`${API_BASE}/login`, body, { withCredentials: true })
       .pipe(tap(() => this.loadProfile().subscribe()));
   }
 

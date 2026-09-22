@@ -1,7 +1,7 @@
 name: Backend CI
 
 # Filtrado por ruta: un cambio en frontend/ no dispara este workflow, ni al revés
-# (ver .github/workflows/frontend.yml, todavía no creado).
+# (ver .github/workflows/frontend.yml).
 on:
   push:
     paths:
@@ -34,5 +34,12 @@ jobs:
 
       # `verify`, no `test`: incluye los tests de integración (*IT) con Testcontainers,
       # además de los unitarios (*Test). El runner de GitHub Actions trae Docker preinstalado.
+      # OpenApiSpecificationIT sobrescribe docs/openapi.json con el contrato recién generado.
       - name: Compilar y ejecutar los tests
         run: ./mvnw --batch-mode verify
+
+      # Si el contrato generado difiere del commiteado, la PR cambió la API sin actualizar
+      # docs/openapi.json: el diff aparece en los logs y el paso falla.
+      - name: Verificar que docs/openapi.json está actualizado
+        working-directory: .
+        run: git diff --exit-code -- docs/openapi.json
