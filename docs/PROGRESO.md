@@ -1,6 +1,6 @@
 # Progreso
 
-Estado del proyecto al retomarlo en una máquina nueva (2026-09-21).
+Estado del proyecto al retomarlo en una máquina nueva (actualizado 2026-09-22).
 
 ## Cortes terminados
 
@@ -212,15 +212,104 @@ Incluye:
 seguidas producen el mismo `docs/openapi.json`; `npm run build` y `npm test` regeneran
 `schema.d.ts` y compilan en verde con los tipos generados.
 
+### Corte 2 — estudiantes y tutores (2026-09-22)
+
+Implementa docs/diseno-api.md secciones 4, 5.3, 5.4 y 5.5.
+
+Incluye:
+
+- **`students`**: `StudentEntity` (borrado lógico, ver decisión abajo), los tres bloques 1:1
+  (`SportsProfileEntity`, `EducationInfoEntity`, `HousingInfoEntity`) y
+  `EmergencyContactEntity`. Endpoints: listado paginado con filtros `status` y `q`, alta,
+  ficha, `PATCH` de la ficha principal, `DELETE` lógico, `PUT` de cada bloque (reemplazo
+  total) y contactos de emergencia (anidados para listar/crear, planos para editar/borrar).
+- **DTOs por rol**, clases separadas: `StudentAdminDto` y `StudentGuardianDto` (también sus
+  bloques anidados), `StudentListDto` igual para ambos roles, y
+  `EmergencyContactAdminDto`/`EmergencyContactGuardianDto`. `GET /students/{id}` devuelve la
+  interfaz sellada `StudentDetailDto` (`oneOf` en OpenAPI, sin discriminador: el front elige
+  el tipo por el rol de la sesión). Los dos mapeos leen del mismo agregado, `StudentSheet`.
+- **`guardians`**: `GuardianEntity`, `StudentGuardianEntity` (clave compuesta
+  `StudentGuardianId`). `/guardians` (listado, alta, ficha, `PATCH`) y el vínculo
+  `PUT/DELETE /students/{sid}/guardians/{gid}`: `PUT` idempotente sobre la pareja de ids, con
+  `relationship`, `isPrimary` y `hasAccess` obligatorios. Un tutor puede enlazarse a una
+  cuenta (`userId`) que debe existir, tener rol GUARDIAN (422 si no) y no estar enlazada ya a
+  otro tutor (409).
+- **Autorización** (el núcleo del corte):
+  - `@PreAuthorize` en todos los métodos de servicio. Las lecturas de un estudiante añaden
+    `@HandleAuthorizationDenied(handlerClass = HideStudentWhenNotVisible.class)`.
+  - `AccessService.canViewStudent` devuelve `StudentAccessDecision` (`GRANTED`/`HIDDEN`/
+    `FORBIDDEN`) en vez de `boolean`: Spring Security 7 admite que la expresión SpEL devuelva un
+    `AuthorizationResult`, y el manejador lo recibe al denegar. `HIDDEN` (estudiante ajeno) →
+    `StudentNotFoundException`, la misma que un id inexistente → 404 idéntico. `FORBIDDEN`
+    (rol STUDENT, sin mirar el id) → 403. La decisión se toma en `AccessService`; el manejador
+    solo traduce.
+  - Las escrituras solo miran el rol → 403 con cualquier id (propio, ajeno o inexistente), así
+    que no revelan existencia.
+  - `StudentAccessSpecifications.visibleToGuardian` es el **único** predicado de visibilidad
+    (`EXISTS` sobre `student_guardians` con `has_access` y `guardians.user_id`). Lo usan
+    `JpaStudentAccessRepository` (acotado a un id, para `@PreAuthorize`) y el listado (vía
+    `AccessService.visibleStudents()`).
+  - Rol STUDENT: 403 en todo el módulo (portal del estudiante, fase 2). Se retiró
+    `StudentAccessRepository.isOwnStudent`, que ya no tenía uso.
+- **Seed local**: `devdata/LocalDemoDataSeeder` (`@Profile("local")`) con dos familias y tres
+  estudiantes inventados. Incluye un padre vinculado **sin** `has_access` para probar ese caso
+  a mano (el Javadoc de la clase tiene la tabla). SQL directo con `JdbcTemplate`, para no abrir
+  la visibilidad de los repositorios de cada módulo. Se activa con `SEED_FAMILY_PASSWORD`
+  (nueva en `.env.example`); si no está definida, se omite sin fallar. Solo carga si
+  `students` está vacía.
+- **Tests**: `StudentAccessIT` (16: los seis obligatorios, la comparación del cuerpo completo
+  del 404 ajeno frente al inexistente —salvo `timestamp` e `instance`, que varían por
+  naturaleza—, sin `has_access` en el listado, contactos de emergencia, 403 de escritura
+  idéntico con id ajeno o inexistente, STUDENT, 401), `StudentControllerIT` (12),
+  `GuardianControllerIT` (8) y `AccessServiceTest` reescrito (10, una regla por test).
+  `AuthTestSupport` se movió a `support` (público) para compartirlo; `StudentTestData`
+  prepara escenarios con SQL.
+- **`docs/openapi.json`** regenerado: solo añade las 18 operaciones y los esquemas nuevos;
+  ninguna operación ni esquema existente cambia.
+- **Orden estable del contrato** (`springdoc.writer-with-order-by-keys: true`): springdoc
+  emitía los paths en orden de registro de los controladores, así que añadir uno reordenaba
+  los demás y el diff mezclaba cambios con movimientos. Ahora todas las claves salen en orden
+  alfabético: paths, esquemas y también las propiedades de cada esquema, que dejan de seguir
+  el orden del record. Verificado: dos `verify` seguidos generan un fichero idéntico
+  (mismo SHA-256).
+- **`operationId` sin sufijos numéricos.** springdoc usa el nombre del método Java y numera
+  los duplicados (`list_1`, `list_2`) por orden de registro: un controlador nuevo podía
+  renumerar operaciones ajenas. Los métodos de controlador llevan nombres únicos
+  (`listStudents`, `createGuardian`...), y `OpenApiSpecificationIT` falla si aparece un sufijo
+  `_N`. Los de `users` (`list`, `create`...) no se renombran, para no cambiar su contrato.
+- **Diff del contrato en local:** con el algoritmo Myers (el de git por defecto), añadir
+  bloques a un JSON muy repetitivo aparenta líneas borradas que no lo son. En el commit de
+  este corte, Myers muestra 92 "borradas"; `--diff-algorithm=histogram` muestra 1424
+  añadidas y 0 borradas. Recomendado: `git config diff.algorithm histogram`.
+- **Rutas inexistentes → 404** (antes 500: `NoResourceFoundException` caía en el catch-all
+  de `GlobalExceptionHandler`), con `GlobalExceptionHandlerIT` sobre el enrutado real.
+- **`/test/protected` fuera del contrato**: `ProtectedTestController` (solo existe en el
+  classpath de test) lleva `@Hidden`. Antes aparecía en `docs/openapi.json` porque el fichero
+  se exporta desde un test de integración.
+- **Seed solo en `local`**, verificado por `LocalDemoDataSeederIT` (en el perfil por defecto el
+  bean no existe y no hay cuentas `@familia.local`) y `LocalDemoDataSeederTest` (anotación
+  `@Profile("local")`, sin contraseña no toca la base de datos, con estudiantes no inserta).
+
+**Bug previo corregido: cabecera `Location` de `POST /users`.** El `UriComponentsBuilder` que
+inyecta Spring MVC parte del *servlet mapping*, no de la URL de la petición, así que
+`uriBuilder.path("/{id}")` producía `http://host/{id}`, sin `/api/v1/users`. `UserControllerIT`
+solo comprobaba que la cabecera existiera. Corregido, y los tests de todos los `201` validan
+ahora la ruta completa.
+
+**Verificado en esta máquina:** `./mvnw verify` en verde (92 tests). `npm run build` del
+frontend compila con los tipos regenerados. Con `spring-boot:run -Dspring-boot.run.profiles=local`,
+el seed carga, y por `curl`: Olena ve a Danylo y Sofiia, y Lucía le da 404; Taras ve a Danylo,
+y Sofiia (vinculado sin acceso) y Lucía le dan 404; Marta solo ve a Lucía. La vista de familia
+no trae `coachNotes` ni `housing`, y la de admin sí.
+
 ## Corte actual y siguiente paso
 
-**Corte actual:** ninguno en marcha. Corte web 1 y el contrato de API (arriba) cerrados, con la
-verificación en navegador real del corte web 1 todavía pendiente (ver arriba).
+**Corte actual:** ninguno en marcha. Corte 2 cerrado (arriba).
 
-**Siguiente:** corte 2, por decidir el dominio. Candidatos naturales según CLAUDE.md: `students`
-(fichas de estudiantes y bloques de ficha) o `guardians` (tutores y vínculos), ambos ya con
-migraciones en `V2`/`V3`. El mecanismo de contrato (`docs/openapi.json` + tipos generados) ya
-está listo para ese dominio: basta con implementar el endpoint y volver a generar.
+**Siguiente:** corte de documentos (`documents`). Además del módulo, trae lo que se aplazó del
+corte 2: almacenamiento S3/MinIO, `PUT /students/{id}/photo` + `photoUrl` prefirmada,
+`documentsSummary` en la ficha y el listado, y la revisión de `@SQLRestriction` (ver
+"Decisiones a revisar").
 
 ## Decisiones tomadas que no están en los documentos de diseño
 
@@ -236,8 +325,60 @@ está listo para ese dominio: basta con implementar el endpoint y volver a gener
 - El rol de aplicación lo crea la infraestructura (script de init de Docker en local; el
   proveedor de base de datos en servidor), nunca una migración de Flyway, porque su contraseña
   es secreto y no debe pasar por un fichero versionado.
+- **STUDENT sin acceso al módulo de estudiantes en fase 1** (403 sin mirar el id). El
+  documento de diseño (sección 3.2) enumera la regla "STUDENT → únicamente el suyo"; queda
+  para el portal del estudiante (fase 2), porque hoy no existe DTO para esa vista.
+- **`GET /students/{id}/emergency-contacts` paginado**, aunque la sección 5.5 no lo marca: se
+  aplica la regla no negociable nº9.
+- **Sin discriminador en `StudentDetailDto`/`EmergencyContactDto`.** La vista depende del
+  rol, y el front ya lo conoce por `/auth/me`. Un campo discriminador sería redundante con la
+  sesión, y además podría contradecirla.
+
+## Decisiones a revisar
+
+- **`@SQLRestriction("deleted_at IS NULL")` en `StudentEntity`** (aceptado solo para el corte
+  2). Tiene dos consecuencias que revisar **en el corte de documentos**:
+  1. Un estudiante borrado es invisible para siempre, **también para el administrador**: no hay
+     forma de consultarlo ni de restaurarlo por la API, y el borrado lógico existe justo para
+     poder recuperar (docs/modelo-datos.md sección 1.3).
+  2. La restricción no se propaga: los documentos del estudiante (y sus contactos de
+     emergencia, vínculos y bloques) siguen existiendo. Hoy, cada ruta que parte de un
+     id de contacto comprueba a mano que el estudiante exista
+     (`EmergencyContactService.getEntityOrThrow`). `GET /documents/{id}` necesitará lo
+     mismo, o un documento de un estudiante borrado seguiría accesible por su URL plana.
+
+  Alternativas a valorar entonces: filtrar `deleted_at` en las consultas del repositorio en
+  lugar de en la entidad, con una ruta explícita de administrador para ver y restaurar
+  borrados; o un `@Filter` de Hibernate que se active por defecto y se desactive solo en esa
+  ruta.
 
 ## Pendientes conocidos
+
+- **`required` en los DTOs de respuesta — tarea propia antes de las pantallas de
+  estudiantes.** Hoy los tipos generados marcan todo como opcional (`firstName?: string`).
+  Las peticiones ya emiten `required` (swagger-core lee `@NotNull`/`@NotBlank`); las
+  respuestas no. Propuesta, pendiente de aprobar e implementar:
+  - Regla: **toda componente de un record de respuesta es `required`**. No es una
+    convención, es un hecho del serializador: Jackson escribe siempre todas las componentes,
+    también las nulas (no se usa `NON_NULL`, regla nº4). La pregunta real es solo cuáles
+    pueden ser `null`.
+  - Las nulables se marcan con `@org.jspecify.annotations.Nullable` (JSpecify ya está en el
+    classpath por Spring Framework 7) y se emiten como `type: [X, "null"]` (OpenAPI 3.1).
+    Resultado en TypeScript: `firstName: string`, `sportsProfile: SportsProfile | null`.
+  - Mecanismo: un `ModelConverter` de swagger-core registrado como bean (springdoc los
+    recoge), que actúa solo sobre records de respuesta (no `*Request`), rellena `required`
+    con todas las componentes y añade `"null"` a las `@Nullable`. Un sitio, no una anotación
+    por campo: con `@Schema(requiredMode = REQUIRED)` campo a campo, un campo nuevo nacería
+    opcional por olvido.
+  - Test: un `IT` sobre `/v3/api-docs` que compruebe varios casos (`StudentAdminDto.id`
+    requerido y no nulable, `StudentGuardianDto.sportsProfile` requerido y nulable), y el
+    `npm run build` del front como segunda red.
+- **`@ApiResponse` por código de error** (docs/diseno-api.md sección 10): ningún controlador
+  los tiene todavía; el contrato solo documenta el caso feliz.
+- **`PATCH` no puede vaciar un campo opcional** (convención heredada de `UpdateUserRequest`:
+  `null` = "no tocar"). Si hace falta, habrá que distinguir "ausente" de `null` en la petición.
+- **Varios tutores `isPrimary` por estudiante**: nada impide marcar dos como principales (ni
+  el esquema ni el servicio). No se ha pedido; decidir si debe ser único.
 
 - **Ya resuelto, no pendiente:** `ALTER DEFAULT PRIVILEGES` para `academia_app` — está en
   `V6__app_role.sql` (tablas y secuencias), contra lo que podría sugerir el contexto previo de
