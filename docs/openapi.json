@@ -905,24 +905,6 @@
         },
         "tags" : [ "Usuarios" ]
       }
-    },
-    "/test/protected" : {
-      "get" : {
-        "operationId" : "protegido",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "protected-test-controller" ]
-      }
     }
   },
   "components" : {
