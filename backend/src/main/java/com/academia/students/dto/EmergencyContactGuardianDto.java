@@ -1,6 +1,7 @@
 package com.academia.students.dto;
 
 import com.academia.students.EmergencyContactEntity;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Contacto de emergencia, vista de familia (docs/diseno-api.md sección 4.2): nombre, relación
@@ -9,7 +10,7 @@ import com.academia.students.EmergencyContactEntity;
  */
 public record EmergencyContactGuardianDto(
         String name,
-        String relationship,
+        @Nullable String relationship,
         String phone) implements EmergencyContactDto {
 
     public static EmergencyContactGuardianDto from(EmergencyContactEntity entity) {

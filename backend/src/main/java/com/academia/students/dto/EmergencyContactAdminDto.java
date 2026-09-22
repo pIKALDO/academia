@@ -2,6 +2,7 @@ package com.academia.students.dto;
 
 import com.academia.students.EmergencyContactEntity;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Contacto de emergencia, vista de administrador. Lleva {@code id} (lo necesita para
@@ -10,9 +11,9 @@ import java.util.UUID;
 public record EmergencyContactAdminDto(
         UUID id,
         String name,
-        String relationship,
+        @Nullable String relationship,
         String phone,
-        String notes,
+        @Nullable String notes,
         int priority) implements EmergencyContactDto {
 
     public static EmergencyContactAdminDto from(EmergencyContactEntity entity) {

@@ -3,6 +3,7 @@ package com.academia.guardians.dto;
 import com.academia.guardians.GuardianEntity;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Respuesta de {@code /guardians} (docs/diseno-api.md sección 5.4). Solo ADMIN accede a este
@@ -11,11 +12,11 @@ import java.util.UUID;
  */
 public record GuardianDto(
         UUID id,
-        UUID userId,
+        @Nullable UUID userId,
         String firstName,
         String lastName,
-        String phone,
-        String email,
+        @Nullable String phone,
+        @Nullable String email,
         Instant createdAt,
         Instant updatedAt) {
 

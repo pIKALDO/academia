@@ -5,6 +5,7 @@ import com.academia.users.UserRole;
 import com.academia.users.UserStatus;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /** Respuesta de {@code GET /auth/me}: lo que un usuario ve de sí mismo. */
 public record UserProfileDto(
@@ -13,7 +14,7 @@ public record UserProfileDto(
         String displayName,
         UserRole role,
         UserStatus status,
-        Instant lastLoginAt) {
+        @Nullable Instant lastLoginAt) {
 
     public static UserProfileDto from(UserEntity user) {
         return new UserProfileDto(user.getId(), user.getEmail(), user.getDisplayName(),

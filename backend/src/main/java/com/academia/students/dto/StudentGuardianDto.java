@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@code GET /students/{id}} con rol GUARDIAN, para su propio hijo (docs/diseno-api.md
@@ -34,17 +35,17 @@ public record StudentGuardianDto(
         UUID id,
         String firstName,
         String lastName,
-        LocalDate birthDate,
-        String nationality,
+        @Nullable LocalDate birthDate,
+        @Nullable String nationality,
         StudentStatus status,
         Contact contact,
         List<LinkedGuardian> guardians,
         List<EmergencyContactGuardianDto> emergencyContacts,
-        SportsProfile sportsProfile,
-        Education education) implements StudentDetailDto {
+        @Nullable SportsProfile sportsProfile,
+        @Nullable Education education) implements StudentDetailDto {
 
     @Schema(name = "StudentGuardianContact")
-    public record Contact(String phone, String email) {
+    public record Contact(@Nullable String phone, @Nullable String email) {
     }
 
     @Schema(name = "StudentGuardianLinkedGuardian")
@@ -62,7 +63,11 @@ public record StudentGuardianDto(
     }
 
     @Schema(name = "StudentGuardianSportsProfile")
-    public record SportsProfile(String level, DominantHand dominantHand, String previousClub, String goals) {
+    public record SportsProfile(
+            @Nullable String level,
+            @Nullable DominantHand dominantHand,
+            @Nullable String previousClub,
+            @Nullable String goals) {
 
         static SportsProfile from(SportsProfileEntity entity) {
             return new SportsProfile(entity.getLevel(), entity.getDominantHand(), entity.getPreviousClub(),
@@ -71,7 +76,7 @@ public record StudentGuardianDto(
     }
 
     @Schema(name = "StudentGuardianEducation")
-    public record Education(String schoolName, String grade) {
+    public record Education(@Nullable String schoolName, @Nullable String grade) {
 
         static Education from(EducationInfoEntity entity) {
             return new Education(entity.getSchoolName(), entity.getGrade());

@@ -1074,22 +1074,23 @@
         "type" : "object",
         "properties" : {
           "grade" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "notes" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "scheduleNotes" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "schoolName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "updatedAt" : {
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "grade", "notes", "scheduleNotes", "schoolName", "updatedAt" ]
       },
       "EducationRequest" : {
         "type" : "object",
@@ -1123,7 +1124,7 @@
             "type" : "string"
           },
           "notes" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "phone" : {
             "type" : "string"
@@ -1133,9 +1134,10 @@
             "format" : "int32"
           },
           "relationship" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "id", "name", "notes", "phone", "priority", "relationship" ]
       },
       "EmergencyContactDto" : {
         "oneOf" : [ {
@@ -1154,9 +1156,10 @@
             "type" : "string"
           },
           "relationship" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "name", "phone", "relationship" ]
       },
       "GuardianDto" : {
         "type" : "object",
@@ -1166,7 +1169,7 @@
             "format" : "date-time"
           },
           "email" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "firstName" : {
             "type" : "string"
@@ -1179,41 +1182,43 @@
             "type" : "string"
           },
           "phone" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "updatedAt" : {
             "type" : "string",
             "format" : "date-time"
           },
           "userId" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "uuid"
           }
-        }
+        },
+        "required" : [ "createdAt", "email", "firstName", "id", "lastName", "phone", "updatedAt", "userId" ]
       },
       "HousingDto" : {
         "type" : "object",
         "properties" : {
           "addressLine" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "city" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "notes" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "responsibleName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "responsiblePhone" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "updatedAt" : {
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "addressLine", "city", "notes", "responsibleName", "responsiblePhone", "updatedAt" ]
       },
       "HousingRequest" : {
         "type" : "object",
@@ -1277,7 +1282,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "number", "size", "totalElements", "totalPages" ]
       },
       "PagedResponseEmergencyContactDto" : {
         "type" : "object",
@@ -1291,7 +1297,8 @@
           "page" : {
             "$ref" : "#/components/schemas/PageInfo"
           }
-        }
+        },
+        "required" : [ "content", "page" ]
       },
       "PagedResponseGuardianDto" : {
         "type" : "object",
@@ -1305,7 +1312,8 @@
           "page" : {
             "$ref" : "#/components/schemas/PageInfo"
           }
-        }
+        },
+        "required" : [ "content", "page" ]
       },
       "PagedResponseStudentListDto" : {
         "type" : "object",
@@ -1319,7 +1327,8 @@
           "page" : {
             "$ref" : "#/components/schemas/PageInfo"
           }
-        }
+        },
+        "required" : [ "content", "page" ]
       },
       "PagedResponseUserSummaryDto" : {
         "type" : "object",
@@ -1333,7 +1342,8 @@
           "page" : {
             "$ref" : "#/components/schemas/PageInfo"
           }
-        }
+        },
+        "required" : [ "content", "page" ]
       },
       "PasswordResetConfirmRequest" : {
         "type" : "object",
@@ -1365,32 +1375,33 @@
         "type" : "object",
         "properties" : {
           "coachNotes" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "dominantHand" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "enum" : [ "RIGHT", "LEFT", "AMBIDEXTROUS" ]
           },
           "goals" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "history" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "level" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "previousClub" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "ranking" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "updatedAt" : {
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "coachNotes", "dominantHand", "goals", "history", "level", "previousClub", "ranking", "updatedAt" ]
       },
       "SportsProfileRequest" : {
         "type" : "object",
@@ -1429,18 +1440,19 @@
         "type" : "object",
         "properties" : {
           "city" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "country" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "line" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "postalCode" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "city", "country", "line", "postalCode" ]
       },
       "StudentAdminContact" : {
         "type" : "object",
@@ -1449,18 +1461,19 @@
             "$ref" : "#/components/schemas/StudentAdminAddress"
           },
           "email" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "phone" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "address", "email", "phone" ]
       },
       "StudentAdminDto" : {
         "type" : "object",
         "properties" : {
           "birthDate" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "contact" : {
@@ -1471,7 +1484,11 @@
             "format" : "date-time"
           },
           "education" : {
-            "$ref" : "#/components/schemas/EducationDto"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/EducationDto"
+            }, {
+              "type" : "null"
+            } ]
           },
           "emergencyContacts" : {
             "type" : "array",
@@ -1480,7 +1497,7 @@
             }
           },
           "enrolledAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "firstName" : {
@@ -1493,7 +1510,11 @@
             }
           },
           "housing" : {
-            "$ref" : "#/components/schemas/HousingDto"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/HousingDto"
+            }, {
+              "type" : "null"
+            } ]
           },
           "id" : {
             "type" : "string",
@@ -1503,10 +1524,14 @@
             "type" : "string"
           },
           "nationality" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "sportsProfile" : {
-            "$ref" : "#/components/schemas/SportsProfileDto"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/SportsProfileDto"
+            }, {
+              "type" : "null"
+            } ]
           },
           "status" : {
             "type" : "string",
@@ -1516,13 +1541,14 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "birthDate", "contact", "createdAt", "education", "emergencyContacts", "enrolledAt", "firstName", "guardians", "housing", "id", "lastName", "nationality", "sportsProfile", "status", "updatedAt" ]
       },
       "StudentAdminLinkedGuardian" : {
         "type" : "object",
         "properties" : {
           "email" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "firstName" : {
             "type" : "string"
@@ -1541,13 +1567,14 @@
             "type" : "string"
           },
           "phone" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "relationship" : {
             "type" : "string",
             "enum" : [ "FATHER", "MOTHER", "LEGAL_GUARDIAN", "OTHER" ]
           }
-        }
+        },
+        "required" : [ "email", "firstName", "hasAccess", "id", "isPrimary", "lastName", "phone", "relationship" ]
       },
       "StudentDetailDto" : {
         "oneOf" : [ {
@@ -1560,25 +1587,30 @@
         "type" : "object",
         "properties" : {
           "email" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "phone" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "email", "phone" ]
       },
       "StudentGuardianDto" : {
         "type" : "object",
         "properties" : {
           "birthDate" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "contact" : {
             "$ref" : "#/components/schemas/StudentGuardianContact"
           },
           "education" : {
-            "$ref" : "#/components/schemas/StudentGuardianEducation"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/StudentGuardianEducation"
+            }, {
+              "type" : "null"
+            } ]
           },
           "emergencyContacts" : {
             "type" : "array",
@@ -1603,27 +1635,33 @@
             "type" : "string"
           },
           "nationality" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "sportsProfile" : {
-            "$ref" : "#/components/schemas/StudentGuardianSportsProfile"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/StudentGuardianSportsProfile"
+            }, {
+              "type" : "null"
+            } ]
           },
           "status" : {
             "type" : "string",
             "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
           }
-        }
+        },
+        "required" : [ "birthDate", "contact", "education", "emergencyContacts", "firstName", "guardians", "id", "lastName", "nationality", "sportsProfile", "status" ]
       },
       "StudentGuardianEducation" : {
         "type" : "object",
         "properties" : {
           "grade" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "schoolName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "grade", "schoolName" ]
       },
       "StudentGuardianLinkDto" : {
         "type" : "object",
@@ -1650,7 +1688,8 @@
             "type" : "string",
             "format" : "uuid"
           }
-        }
+        },
+        "required" : [ "createdAt", "guardianId", "hasAccess", "isPrimary", "relationship", "studentId" ]
       },
       "StudentGuardianLinkRequest" : {
         "type" : "object",
@@ -1684,25 +1723,27 @@
             "type" : "string",
             "enum" : [ "FATHER", "MOTHER", "LEGAL_GUARDIAN", "OTHER" ]
           }
-        }
+        },
+        "required" : [ "firstName", "isPrimary", "lastName", "relationship" ]
       },
       "StudentGuardianSportsProfile" : {
         "type" : "object",
         "properties" : {
           "dominantHand" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "enum" : [ "RIGHT", "LEFT", "AMBIDEXTROUS" ]
           },
           "goals" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "level" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "previousClub" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "dominantHand", "goals", "level", "previousClub" ]
       },
       "StudentListDto" : {
         "type" : "object",
@@ -1721,7 +1762,8 @@
             "type" : "string",
             "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
           }
-        }
+        },
+        "required" : [ "firstName", "id", "lastName", "status" ]
       },
       "UpdateEmergencyContactRequest" : {
         "type" : "object",
@@ -1877,7 +1919,7 @@
             "format" : "uuid"
           },
           "lastLoginAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "role" : {
@@ -1892,7 +1934,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "createdAt", "displayName", "email", "id", "lastLoginAt", "role", "status", "updatedAt" ]
       },
       "UserProfileDto" : {
         "type" : "object",
@@ -1908,7 +1951,7 @@
             "format" : "uuid"
           },
           "lastLoginAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "role" : {
@@ -1919,7 +1962,8 @@
             "type" : "string",
             "enum" : [ "ACTIVE", "DISABLED", "PENDING_ACTIVATION" ]
           }
-        }
+        },
+        "required" : [ "displayName", "email", "id", "lastLoginAt", "role", "status" ]
       },
       "UserSummaryDto" : {
         "type" : "object",
@@ -1942,7 +1986,8 @@
             "type" : "string",
             "enum" : [ "ACTIVE", "DISABLED", "PENDING_ACTIVATION" ]
           }
-        }
+        },
+        "required" : [ "displayName", "email", "id", "role", "status" ]
       }
     },
     "securitySchemes" : {
