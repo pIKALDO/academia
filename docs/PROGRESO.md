@@ -355,14 +355,91 @@ Incluye:
 **Verificado en esta máquina:** `./mvnw verify` en verde (69 tests). `npm run build` y
 `npm test` del frontend compilan y pasan en verde con los tipos regenerados.
 
+### Corte web 2 — pantallas de estudiantes (2026-09-22)
+
+Implementa las cinco pantallas de `students`/`guardians` sobre docs/diseno-api.md secciones 4,
+5.3, 5.4 y 5.5.
+
+Incluye:
+
+- **Modelos y servicios** (`core/models/{student,guardian,emergency-contact}.model.ts`,
+  `core/services/{students,guardians,emergency-contacts,users}.service.ts`), todos derivados de
+  `components['schemas'][...]` del `schema.d.ts` generado — ningún tipo escrito a mano.
+  `core/models/paged-response.model.ts` define un `PagedResponse<T>` genérico (`content` + el
+  `PageInfo` generado) para no repetir el envoltorio por cada `PagedResponse*Dto`.
+- **`StudentDetailDto`/`EmergencyContactDto` son un `oneOf` sin discriminador** (decisión ya
+  tomada en el corte 2 de backend): el frontend los trata como unión de tipos y distingue la
+  vista por la **presencia de la clave**, no por el rol de sesión — `isAdminStudent` comprueba
+  `'housing' in student`, `isAdminGuardianLink` comprueba `'id' in guardian`,
+  `isAdminEmergencyContact` comprueba `'id' in contact`. Es la regla no negociable nº 3 aplicada
+  literalmente: la pestaña "Alojamiento", los campos `coachNotes`/`ranking`/`history` de
+  deportiva y `notes`/`scheduleNotes` de estudios no se pintan porque la clave no llega en la
+  respuesta de un `GUARDIAN`, nunca porque el componente compruebe `session.role`.
+- **`shared/shell/`**: layout autenticado (topbar + navegación + `router-outlet`) que envuelve
+  todas las rutas tras el login; sustituye a `features/home` (eliminado). El enlace "Tutores"
+  solo se pinta si `session.currentUser()?.role === 'ADMIN'` — ocultar una acción de navegación
+  por rol no es lo mismo que filtrar datos ya recibidos, y el backend igualmente devuelve 403 a
+  `GET /guardians` si un `GUARDIAN` fuerza la ruta.
+- **Pantallas**:
+  - `features/students/students-list/` — listado (pantalla de inicio tras login), con buscador
+    (`q`, debounce 300ms) y filtro por `status`. Tabla en desktop, tarjetas en mobile
+    (`< 720px`), controlado solo por CSS (`.desktop-only`/`.mobile-only`), sin duplicar la
+    petición. Paginación con los campos de `PageInfo`. Botón "Añadir estudiante" solo para
+    `ADMIN`.
+  - `features/students/student-create/` — alta (`POST /students`), formulario plano (los
+    bloques no existen hasta que se crean desde la ficha).
+  - `features/students/student-detail/` — ficha con pestañas (`Personales`, `Familia`,
+    `Deportiva`, `Estudios`, `Alojamiento` — esta última solo si `isAdminStudent`). Cada pestaña
+    es un componente propio bajo `tabs/`, recibe `student`/`isAdmin` y emite `saved`; el
+    contenedor father hace `reload()` (recarga completa de `GET /students/{id}`) tras cualquier
+    escritura en vez de fusionar estado local — más simple y evita divergencias entre lo que
+    devuelve cada `PUT`/`PATCH` y el agregado completo.
+  - `tabs/family-tab/` — la más grande: tutores vinculados (editar vínculo, desvincular,
+    vincular un tutor ya existente o crear uno nuevo e vincularlo en el mismo flujo, con
+    selector de cuenta de acceso vía `GET /users?role=GUARDIAN`) y contactos de emergencia
+    (alta/edición/borrado). Ambos bloques usan los arrays embebidos en `StudentDetailDto`
+    (`guardians`, `emergencyContacts`), no una petición paginada aparte — ya vienen completos en
+    la ficha.
+  - `features/guardians/guardians-list/` — gestión global de tutores (`GET/POST/PATCH
+    /guardians`), independiente de cualquier estudiante concreto; ruta `/guardians`,
+    `roleGuard(['ADMIN'])`.
+- **Sin `photoUrl` todavía.** `PUT /students/{id}/photo` está aplazado al corte de documentos
+  (ver más abajo). El listado y la ficha usan `shared/avatar/` (iniciales sobre un círculo de
+  color), pensado para sustituirse por una `<img>` sin tocar la maquetación cuando `photoUrl`
+  llegue al contrato.
+- **CSS compartido** (`shared/styles/{buttons,forms,panel,data-table}.css`), importado con
+  `@import` desde cada componente (mismo patrón que `auth-screen.css` del corte web 1): botones
+  primario/secundario/ghost/destructivo, campos de formulario, paneles con cabecera y toda la
+  tabla de datos (cabecera `#F8FAFC`, fila 36px, hover, radio recto), tal como los describe
+  `frontend/DESIGN.md`.
+
+**Verificado en esta máquina** con el backend real (`spring-boot:run -Dspring-boot.run.profiles=local`)
+y `ng serve` a través del proxy: `npm run build` y `npm test` compilan y pasan en verde. Los
+flujos de escritura (alta de estudiante, contacto de emergencia, vínculo con tutor existente,
+`PUT` de ficha deportiva, borrado) verificados por `curl` contra `localhost:4200` reproduciendo
+exactamente las peticiones que hace el frontend (cookie de sesión + `X-XSRF-TOKEN`): todas
+devuelven los códigos esperados y el agregado final coincide con lo que pintan los componentes.
+Confirmado con las cuentas del seed que Olena, como `GUARDIAN`, recibe la ficha de Danylo sin
+`housing` ni `coachNotes`/`ranking`/`history`/`notes`/`scheduleNotes`, sin datos de contacto de
+los otros tutores ni de los contactos de emergencia, `GET /students/{id}` de un estudiante ajeno
+(Lucía) devuelve 404, y `GET /guardians` devuelve 403.
+
+**Pendiente para quien continúe: verificación visual en un navegador real.** Este entorno no
+tiene una herramienta de navegador disponible (mismo límite que en el corte web 1), así que el
+render de las cinco pantallas, la maquetación mobile (tarjetas vs. tabla) y el comportamiento de
+los formularios no se han visto, solo verificado a nivel de API/contrato. Abrir
+`http://localhost:4200`, entrar como `admin@academia.local` y como `olena.kovalenko@familia.local`
+(contraseñas en `.env`) y repetir a ojo lo que este corte verificó por `curl`.
+
 ## Corte actual y siguiente paso
 
-**Corte actual:** ninguno en marcha. Corte 2 cerrado (arriba).
+**Corte actual:** ninguno en marcha. Corte web 2 cerrado (arriba).
 
 **Siguiente:** corte de documentos (`documents`). Además del módulo, trae lo que se aplazó del
 corte 2: almacenamiento S3/MinIO, `PUT /students/{id}/photo` + `photoUrl` prefirmada,
 `documentsSummary` en la ficha y el listado, y la revisión de `@SQLRestriction` (ver
-"Decisiones a revisar").
+"Decisiones a revisar"). En el frontend, sustituir `shared/avatar/` por la foto real en listado
+y ficha cuando `photoUrl` llegue al contrato.
 
 ## Decisiones tomadas que no están en los documentos de diseño
 

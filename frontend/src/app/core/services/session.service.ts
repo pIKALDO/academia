@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { components } from '../api/schema';
 import { UserProfile } from '../models/user.model';
 
@@ -20,11 +20,17 @@ export class SessionService {
 
   constructor(private readonly http: HttpClient) {}
 
-  login(email: string, password: string): Observable<void> {
+  /**
+   * Encadena `loadProfile()` (en vez de dispararlo como una suscripción aparte con `tap`):
+   * si el observable devuelto completara antes de que el perfil esté cargado, un `next` que
+   * navegara a una ruta protegida en ese instante encontraría `isAuthenticated()` todavía en
+   * `false` y el guard rebotaría a `/login` — el síntoma era necesitar un segundo clic.
+   */
+  login(email: string, password: string): Observable<UserProfile> {
     const body: LoginRequest = { email, password };
     return this.http
       .post<void>(`${API_BASE}/login`, body, { withCredentials: true })
-      .pipe(tap(() => this.loadProfile().subscribe()));
+      .pipe(switchMap(() => this.loadProfile()));
   }
 
   logout(): Observable<void> {

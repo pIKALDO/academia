@@ -1,0 +1,287 @@
+<div class="family-tab">
+  <div class="panel">
+    <div class="panel-header">
+      <h2 class="headline-md">Tutores legales</h2>
+      @if (isAdmin() && addMode() === 'closed') {
+        <div class="header-actions">
+          <button type="button" class="btn btn--secondary btn--compact" (click)="openAddExisting()">
+            Vincular existente
+          </button>
+          <button type="button" class="btn btn--primary btn--compact" (click)="openAddNew()">
+            + Nuevo tutor
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (guardians().length === 0) {
+      <p class="empty-state">Todavía no hay tutores vinculados.</p>
+    } @else {
+      <ul class="guardian-list">
+        @for (g of guardians(); track $index) {
+          <li class="guardian-row">
+            @if (editingLinkId() === (isAdminGuardianLink(g) ? g.id : '')) {
+              <form [formGroup]="linkForm" (ngSubmit)="submitEditLink()" class="inline-form">
+                <div class="field-row">
+                  <label class="field">
+                    <span class="label">Parentesco</span>
+                    <select formControlName="relationship">
+                      <option value="FATHER">Padre</option>
+                      <option value="MOTHER">Madre</option>
+                      <option value="LEGAL_GUARDIAN">Tutor legal</option>
+                      <option value="OTHER">Otro</option>
+                    </select>
+                  </label>
+                  <label class="checkbox-field">
+                    <input type="checkbox" formControlName="isPrimary" />
+                    Tutor principal
+                  </label>
+                  <label class="checkbox-field">
+                    <input type="checkbox" formControlName="hasAccess" />
+                    Acceso al portal
+                  </label>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn--secondary btn--compact" (click)="cancelEditLink()">
+                    Cancelar
+                  </button>
+                  <button type="submit" class="btn btn--primary btn--compact" [disabled]="savingLink()">
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            } @else {
+              <div class="guardian-info">
+                <span class="guardian-name">
+                  {{ g.firstName }} {{ g.lastName }}
+                  @if (g.isPrimary) {
+                    <span class="badge-primary">Principal</span>
+                  }
+                </span>
+                <span class="guardian-meta">{{ relationshipLabel(g.relationship) }}</span>
+                @if (isAdminGuardianLink(g)) {
+                  <span class="guardian-meta">{{ g.phone || 'Sin teléfono' }} · {{ g.email || 'Sin correo' }}</span>
+                  <span class="guardian-meta">
+                    {{ g.hasAccess ? 'Con acceso al portal' : 'Sin acceso al portal' }}
+                  </span>
+                }
+              </div>
+              @if (isAdminGuardianLink(g)) {
+                <div class="guardian-actions">
+                  <button type="button" class="btn btn--secondary btn--compact" (click)="startEditLink(g)">
+                    Editar vínculo
+                  </button>
+                  <button type="button" class="btn btn--destructive btn--compact" (click)="unlink(g.id)">
+                    Desvincular
+                  </button>
+                </div>
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (addMode() === 'existing') {
+      <div class="add-panel">
+        <h3 class="headline-md">Vincular tutor existente</h3>
+        <label class="field">
+          <span class="label">Tutor</span>
+          <select [formControl]="selectedGuardianId">
+            <option value="">Selecciona un tutor</option>
+            @for (guardian of availableGuardians(); track guardian.id) {
+              <option [value]="guardian.id">{{ guardian.firstName }} {{ guardian.lastName }}</option>
+            }
+          </select>
+        </label>
+        <form [formGroup]="newLinkForm" (ngSubmit)="submitLinkExisting()" class="inline-form">
+          <div class="field-row">
+            <label class="field">
+              <span class="label">Parentesco</span>
+              <select formControlName="relationship">
+                <option value="FATHER">Padre</option>
+                <option value="MOTHER">Madre</option>
+                <option value="LEGAL_GUARDIAN">Tutor legal</option>
+                <option value="OTHER">Otro</option>
+              </select>
+            </label>
+            <label class="checkbox-field">
+              <input type="checkbox" formControlName="isPrimary" />
+              Tutor principal
+            </label>
+            <label class="checkbox-field">
+              <input type="checkbox" formControlName="hasAccess" />
+              Acceso al portal
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn--secondary" (click)="closeAdd()">Cancelar</button>
+            <button
+              type="submit"
+              class="btn btn--primary"
+              [disabled]="!selectedGuardianId.value || savingNewLink()"
+            >
+              Vincular
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    @if (addMode() === 'new') {
+      <div class="add-panel">
+        <h3 class="headline-md">Nuevo tutor</h3>
+        <form [formGroup]="newGuardianForm" class="inline-form">
+          <div class="field-row">
+            <label class="field">
+              <span class="label">Nombre *</span>
+              <input type="text" formControlName="firstName" />
+            </label>
+            <label class="field">
+              <span class="label">Apellidos *</span>
+              <input type="text" formControlName="lastName" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span class="label">Correo electrónico</span>
+              <input type="email" formControlName="email" />
+            </label>
+            <label class="field">
+              <span class="label">Teléfono</span>
+              <input type="tel" formControlName="phone" />
+            </label>
+          </div>
+          <label class="field">
+            <span class="label">Cuenta de acceso (opcional)</span>
+            <select formControlName="userId">
+              <option value="">Sin cuenta vinculada</option>
+              @for (user of availableUsers(); track user.id) {
+                <option [value]="user.id">{{ user.displayName }} ({{ user.email }})</option>
+              }
+            </select>
+          </label>
+        </form>
+
+        <form [formGroup]="newLinkForm" (ngSubmit)="submitNewGuardian()" class="inline-form">
+          <div class="field-row">
+            <label class="field">
+              <span class="label">Parentesco</span>
+              <select formControlName="relationship">
+                <option value="FATHER">Padre</option>
+                <option value="MOTHER">Madre</option>
+                <option value="LEGAL_GUARDIAN">Tutor legal</option>
+                <option value="OTHER">Otro</option>
+              </select>
+            </label>
+            <label class="checkbox-field">
+              <input type="checkbox" formControlName="isPrimary" />
+              Tutor principal
+            </label>
+            <label class="checkbox-field">
+              <input type="checkbox" formControlName="hasAccess" />
+              Acceso al portal
+            </label>
+          </div>
+          @if (newGuardianForm.invalid && newGuardianForm.touched) {
+            <p class="error-text">Revisa los campos marcados antes de guardar.</p>
+          }
+          <div class="form-actions">
+            <button type="button" class="btn btn--secondary" (click)="closeAdd()">Cancelar</button>
+            <button type="submit" class="btn btn--primary" [disabled]="savingNewLink()">
+              Crear y vincular
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2 class="headline-md">Contactos de emergencia</h2>
+      @if (isAdmin() && !addingContact() && !editingContactId()) {
+        <button type="button" class="btn btn--primary btn--compact" (click)="openAddContact()">
+          + Añadir contacto
+        </button>
+      }
+    </div>
+
+    @if (emergencyContacts().length === 0) {
+      <p class="empty-state">Todavía no hay contactos de emergencia.</p>
+    } @else {
+      <ul class="contact-list">
+        @for (c of emergencyContacts(); track $index) {
+          <li class="contact-row">
+            @if (isAdminEmergencyContact(c) && editingContactId() === c.id) {
+              <!-- editado más abajo, en el formulario compartido -->
+            } @else {
+              <div class="contact-info">
+                <span class="contact-name">{{ c.name }}</span>
+                <span class="contact-meta">{{ c.phone }}</span>
+                @if (c.relationship) {
+                  <span class="contact-meta">{{ c.relationship }}</span>
+                }
+                @if (isAdminEmergencyContact(c)) {
+                  <span class="contact-meta">Prioridad {{ c.priority }}</span>
+                  @if (c.notes) {
+                    <span class="contact-meta">{{ c.notes }}</span>
+                  }
+                }
+              </div>
+              @if (isAdminEmergencyContact(c)) {
+                <div class="contact-actions">
+                  <button type="button" class="btn btn--secondary btn--compact" (click)="startEditContact(c)">
+                    Editar
+                  </button>
+                  <button type="button" class="btn btn--destructive btn--compact" (click)="deleteContact(c.id)">
+                    Eliminar
+                  </button>
+                </div>
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (addingContact() || editingContactId()) {
+      <form [formGroup]="contactForm" (ngSubmit)="submitContact()" class="inline-form add-panel">
+        <h3 class="headline-md">{{ editingContactId() ? 'Editar contacto' : 'Nuevo contacto' }}</h3>
+        <div class="field-row">
+          <label class="field">
+            <span class="label">Nombre *</span>
+            <input type="text" formControlName="name" />
+          </label>
+          <label class="field">
+            <span class="label">Teléfono *</span>
+            <input type="tel" formControlName="phone" />
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span class="label">Relación</span>
+            <input type="text" formControlName="relationship" />
+          </label>
+          <label class="field">
+            <span class="label">Prioridad</span>
+            <input type="number" formControlName="priority" min="1" max="99" />
+          </label>
+        </div>
+        <label class="field">
+          <span class="label">Notas</span>
+          <textarea formControlName="notes"></textarea>
+        </label>
+        @if (contactForm.invalid && contactForm.touched) {
+          <p class="error-text">Revisa los campos marcados antes de guardar.</p>
+        }
+        <div class="form-actions">
+          <button type="button" class="btn btn--secondary" (click)="cancelContactForm()">Cancelar</button>
+          <button type="submit" class="btn btn--primary" [disabled]="savingContact()">
+            {{ savingContact() ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

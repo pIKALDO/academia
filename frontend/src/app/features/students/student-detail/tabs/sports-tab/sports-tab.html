@@ -1,0 +1,99 @@
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="headline-md">Ficha deportiva</h2>
+    @if (isAdmin() && !editing()) {
+      <button type="button" class="btn btn--secondary btn--compact" (click)="startEdit()">
+        Editar
+      </button>
+    }
+  </div>
+
+  @if (!editing()) {
+    @if (!sportsProfile() && !isAdmin()) {
+      <p class="empty-state">Todavía no hay ficha deportiva registrada.</p>
+    } @else {
+      <dl class="info-grid">
+        <div>
+          <dt>Nivel</dt>
+          <dd>{{ sportsProfile()?.level || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Mano dominante</dt>
+          <dd>{{ handLabel(sportsProfile()?.dominantHand) }}</dd>
+        </div>
+        <div>
+          <dt>Club anterior</dt>
+          <dd>{{ sportsProfile()?.previousClub || '—' }}</dd>
+        </div>
+        @if (coachDetails(); as c) {
+          <div>
+            <dt>Ranking</dt>
+            <dd>{{ c.ranking || '—' }}</dd>
+          </div>
+        }
+        <div class="span-2">
+          <dt>Objetivos</dt>
+          <dd>{{ sportsProfile()?.goals || '—' }}</dd>
+        </div>
+        @if (coachDetails(); as c) {
+          <div class="span-2">
+            <dt>Historial</dt>
+            <dd>{{ c.history || '—' }}</dd>
+          </div>
+          <div class="span-2">
+            <dt>Notas del entrenador</dt>
+            <dd>{{ c.coachNotes || '—' }}</dd>
+          </div>
+        }
+      </dl>
+    }
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Nivel</span>
+          <input type="text" formControlName="level" />
+        </label>
+        <label class="field">
+          <span class="label">Mano dominante</span>
+          <select formControlName="dominantHand">
+            <option value="">Sin especificar</option>
+            <option value="RIGHT">Diestro</option>
+            <option value="LEFT">Zurdo</option>
+            <option value="AMBIDEXTROUS">Ambidiestro</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label">Club anterior</span>
+          <input type="text" formControlName="previousClub" />
+        </label>
+        <label class="field">
+          <span class="label">Ranking</span>
+          <input type="text" formControlName="ranking" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="label">Objetivos</span>
+        <textarea formControlName="goals"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="label">Historial</span>
+        <textarea formControlName="history"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="label">Notas del entrenador</span>
+        <textarea formControlName="coachNotes"></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn--secondary" (click)="cancel()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+          {{ submitting() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

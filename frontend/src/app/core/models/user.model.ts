@@ -8,3 +8,6 @@ export type UserStatus = components['schemas']['UserProfileDto']['status'];
 
 /** Respuesta de GET /auth/me. Tipo generado desde docs/openapi.json. */
 export type UserProfile = components['schemas']['UserProfileDto'];
+
+/** Fila de GET /users. Usado para vincular un tutor a una cuenta de acceso. */
+export type UserSummary = components['schemas']['UserSummaryDto'];

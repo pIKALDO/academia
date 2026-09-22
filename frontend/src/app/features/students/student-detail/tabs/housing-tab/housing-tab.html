@@ -1,0 +1,73 @@
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="headline-md">Alojamiento</h2>
+    @if (isAdmin() && !editing()) {
+      <button type="button" class="btn btn--secondary btn--compact" (click)="startEdit()">
+        Editar
+      </button>
+    }
+  </div>
+
+  @if (!editing()) {
+    @if (!housing()) {
+      <p class="empty-state">Todavía no hay información de alojamiento registrada.</p>
+    } @else {
+      <dl class="info-grid">
+        <div class="span-2">
+          <dt>Dirección</dt>
+          <dd>{{ housing()?.addressLine || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Ciudad</dt>
+          <dd>{{ housing()?.city || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Responsable</dt>
+          <dd>{{ housing()?.responsibleName || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Teléfono del responsable</dt>
+          <dd>{{ housing()?.responsiblePhone || '—' }}</dd>
+        </div>
+        <div class="span-2">
+          <dt>Notas</dt>
+          <dd>{{ housing()?.notes || '—' }}</dd>
+        </div>
+      </dl>
+    }
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+      <label class="field">
+        <span class="label">Dirección</span>
+        <input type="text" formControlName="addressLine" />
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Ciudad</span>
+          <input type="text" formControlName="city" />
+        </label>
+        <label class="field">
+          <span class="label">Responsable</span>
+          <input type="text" formControlName="responsibleName" />
+        </label>
+        <label class="field">
+          <span class="label">Teléfono del responsable</span>
+          <input type="tel" formControlName="responsiblePhone" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="label">Notas</span>
+        <textarea formControlName="notes"></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn--secondary" (click)="cancel()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+          {{ submitting() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -1,0 +1,26 @@
+<div class="page">
+  <header class="topbar">
+    <span class="brand">Academia</span>
+
+    <nav class="nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+        >Estudiantes</a
+      >
+      @if (isAdmin()) {
+        <a routerLink="/guardians" routerLinkActive="active">Tutores</a>
+      }
+    </nav>
+
+    <div class="user-info">
+      @if (user(); as u) {
+        <span class="user-name">{{ u.displayName }}</span>
+        <span class="user-role">{{ u.role === 'ADMIN' ? 'Administración' : 'Familia' }}</span>
+      }
+      <button type="button" class="btn-ghost" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

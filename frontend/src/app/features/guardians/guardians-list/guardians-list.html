@@ -1,0 +1,111 @@
+<section class="guardians-list">
+  <a class="back-link" routerLink="/">← Estudiantes</a>
+
+  <header class="panel-header">
+    <div>
+      <h1 class="headline-xl">Tutores</h1>
+      <p class="subtitle">{{ totalElements() }} en total</p>
+    </div>
+    @if (!creating() && !editingId()) {
+      <button type="button" class="btn btn--primary" (click)="openCreate()">+ Nuevo tutor</button>
+    }
+  </header>
+
+  @if (creating() || editingId()) {
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="headline-md">{{ editingId() ? 'Editar tutor' : 'Nuevo tutor' }}</h2>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="guardian-form">
+        <div class="field-row">
+          <label class="field">
+            <span class="label">Nombre *</span>
+            <input type="text" formControlName="firstName" />
+          </label>
+          <label class="field">
+            <span class="label">Apellidos *</span>
+            <input type="text" formControlName="lastName" />
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span class="label">Correo electrónico</span>
+            <input type="email" formControlName="email" />
+          </label>
+          <label class="field">
+            <span class="label">Teléfono</span>
+            <input type="tel" formControlName="phone" />
+          </label>
+        </div>
+        <label class="field">
+          <span class="label">ID de cuenta de acceso (opcional)</span>
+          <input type="text" formControlName="userId" placeholder="UUID de una cuenta GUARDIAN existente" />
+        </label>
+
+        @if (form.invalid && form.touched) {
+          <p class="error-text">Revisa los campos marcados antes de guardar.</p>
+        }
+
+        <div class="form-actions">
+          <button type="button" class="btn btn--secondary" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" class="btn btn--primary" [disabled]="submitting()">
+            {{ submitting() ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="empty-state">Cargando…</p>
+  } @else if (guardians().length === 0) {
+    <p class="empty-state">Todavía no hay tutores registrados.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Contacto</th>
+          <th>Cuenta de acceso</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (g of guardians(); track g.id) {
+          <tr>
+            <td>{{ g.firstName }} {{ g.lastName }}</td>
+            <td>{{ g.phone || '—' }} · {{ g.email || '—' }}</td>
+            <td>{{ g.userId ? 'Vinculada' : 'Sin vincular' }}</td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn--secondary btn--compact" (click)="startEdit(g)">
+                Editar
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button
+          type="button"
+          class="btn btn--secondary btn--compact"
+          [disabled]="page() === 0"
+          (click)="goToPage(page() - 1)"
+        >
+          Anterior
+        </button>
+        <span>Página {{ page() + 1 }} de {{ totalPages() }}</span>
+        <button
+          type="button"
+          class="btn btn--secondary btn--compact"
+          [disabled]="page() + 1 >= totalPages()"
+          (click)="goToPage(page() + 1)"
+        >
+          Siguiente
+        </button>
+      </div>
+    }
+  }
+</section>
