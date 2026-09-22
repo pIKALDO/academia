@@ -308,6 +308,53 @@ Para que funcione "Try it out" hizo falta `springdoc.swagger-ui.csrf.enabled: tr
 Swagger UI no envía `X-XSRF-TOKEN` y toda petición que modifica estado (el login incluido)
 responde 403.
 
+### Campos obligatorios en el contrato de la API (2026-09-22)
+
+Implementa la propuesta que quedó pendiente en el corte 2 (ver más abajo, ahora resuelta).
+
+Incluye:
+
+- **`ResponseSchemaModelConverter`** (`com.academia.config`, registrado como `@Bean` en
+  `OpenApiConfig`): recorre solo records de respuesta (no `*Request`) y marca `required`
+  todas sus componentes; las anotadas con `@org.jspecify.annotations.Nullable` en el propio
+  DTO añaden `"null"` a su `type`. Un campo `$ref` (un bloque anidado como `sportsProfile`,
+  `education`, `housing`) no admite `type` como palabra clave hermana en OpenAPI 3.1 —el
+  esquema referenciado ya fija el suyo—, así que esos casos se envuelven en
+  `anyOf: [{$ref}, {type: "null"}]` en vez de tocar el `$ref` directamente.
+  - **Detalle no obvio de swagger-core**: para un tipo con nombre, `chain.next()` no devuelve
+    el esquema con sus `properties`, sino un `$ref` a él; el esquema real vive en
+    `context.getDefinedModels()`, bajo el nombre del `$ref` (que puede venir de
+    `@Schema(name = ...)` y no coincidir con el nombre simple de la clase Java, como pasa con
+    los records anidados de `StudentAdminDto`/`StudentGuardianDto`). El conversor resuelve el
+    nombre a partir del propio `$ref`, no de la clase.
+  - Otro detalle: `@Nullable` de JSpecify solo admite `ElementType.TYPE_USE`, así que no
+    aparece en `RecordComponent.getAnnotations()` (anotaciones de declaración); hace falta
+    `RecordComponent.getAnnotatedType().isAnnotationPresent(...)`.
+  - Se anotó `@Nullable` cada componente nulable según la migración real (columna sin
+    `NOT NULL`), no por conveniencia: `StudentAdminDto`/`StudentGuardianDto` y sus bloques
+    anidados, `EducationDto`, `HousingDto`, `SportsProfileDto`,
+    `EmergencyContactAdminDto.relationship`/`notes`, `EmergencyContactGuardianDto.relationship`,
+    `GuardianDto.userId`/`phone`/`email`, `UserDetailDto.lastLoginAt`,
+    `UserProfileDto.lastLoginAt`.
+- **`operationId` de `users` renombrados** a la misma convención que el resto
+  (`listUsers`, `createUser`, `getUser`, `updateUser`, `disableUser`, `enableUser`): el único
+  consumidor del contrato es el frontend propio, así que el cambio no rompe nada fuera del
+  repositorio.
+- **Test**: `ResponseSchemaModelConverterIT` (`com.academia.config`), cuatro casos concretos
+  contra `/v3/api-docs`: un campo obligatorio y no nulable (`UserDetailDto.email`), uno
+  nulable (`UserDetailDto.lastLoginAt`), uno nulable que referencia otro esquema
+  (`StudentAdminDto.sportsProfile`, envuelto en `anyOf`) y un `*Request`
+  (`UpdateUserRequest`) sin `required` añadido.
+- **`docs/openapi.json` regenerado**: el diff (`histogram`) toca solo `required` nuevo,
+  `type: [X, "null"]`/`anyOf` en las componentes nulables y los seis `operationId` de
+  `users`. Ningún esquema de petición (`*Request`) cambia.
+- **Frontend**: `npm run build` y `npm test` regeneran `schema.d.ts` y compilan en verde sin
+  tocar código. Ninguna pantalla existente usa todavía los campos que pasan a nulables
+  (`lastLoginAt` no se lee en ningún sitio), así que no hizo falta ajustar nada.
+
+**Verificado en esta máquina:** `./mvnw verify` en verde (69 tests). `npm run build` y
+`npm test` del frontend compilan y pasan en verde con los tipos regenerados.
+
 ## Corte actual y siguiente paso
 
 **Corte actual:** ninguno en marcha. Corte 2 cerrado (arriba).
@@ -360,25 +407,8 @@ corte 2: almacenamiento S3/MinIO, `PUT /students/{id}/photo` + `photoUrl` prefir
 
 ## Pendientes conocidos
 
-- **`required` en los DTOs de respuesta — tarea propia antes de las pantallas de
-  estudiantes.** Hoy los tipos generados marcan todo como opcional (`firstName?: string`).
-  Las peticiones ya emiten `required` (swagger-core lee `@NotNull`/`@NotBlank`); las
-  respuestas no. Propuesta, pendiente de aprobar e implementar:
-  - Regla: **toda componente de un record de respuesta es `required`**. No es una
-    convención, es un hecho del serializador: Jackson escribe siempre todas las componentes,
-    también las nulas (no se usa `NON_NULL`, regla nº4). La pregunta real es solo cuáles
-    pueden ser `null`.
-  - Las nulables se marcan con `@org.jspecify.annotations.Nullable` (JSpecify ya está en el
-    classpath por Spring Framework 7) y se emiten como `type: [X, "null"]` (OpenAPI 3.1).
-    Resultado en TypeScript: `firstName: string`, `sportsProfile: SportsProfile | null`.
-  - Mecanismo: un `ModelConverter` de swagger-core registrado como bean (springdoc los
-    recoge), que actúa solo sobre records de respuesta (no `*Request`), rellena `required`
-    con todas las componentes y añade `"null"` a las `@Nullable`. Un sitio, no una anotación
-    por campo: con `@Schema(requiredMode = REQUIRED)` campo a campo, un campo nuevo nacería
-    opcional por olvido.
-  - Test: un `IT` sobre `/v3/api-docs` que compruebe varios casos (`StudentAdminDto.id`
-    requerido y no nulable, `StudentGuardianDto.sportsProfile` requerido y nulable), y el
-    `npm run build` del front como segunda red.
+- **Ya resuelto, no pendiente:** `required` en los DTOs de respuesta — ver "Campos
+  obligatorios en el contrato de la API" arriba.
 - **`@ApiResponse` por código de error** (docs/diseno-api.md sección 10): ningún controlador
   los tiene todavía; el contrato solo documenta el caso feliz.
 - **`PATCH` no puede vaciar un campo opcional** (convención heredada de `UpdateUserRequest`:
