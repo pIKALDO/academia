@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ProblemDetail;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -18,6 +19,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 class GlobalExceptionHandlerTest {
 
@@ -30,6 +32,15 @@ class GlobalExceptionHandlerTest {
 
         assertThat(problem.getStatus()).isEqualTo(404);
         assertThat(problem.getDetail()).isEqualTo("no existe");
+    }
+
+    @Test
+    void una_ruta_inexistente_responde_404_sin_repetir_la_ruta_en_el_detalle() {
+        ProblemDetail problem = handler.handleNoResource(
+                new NoResourceFoundException(HttpMethod.GET, "/api/v1/no-existe", "api/v1/no-existe"), request);
+
+        assertThat(problem.getStatus()).isEqualTo(404);
+        assertThat(problem.getDetail()).doesNotContain("no-existe");
     }
 
     @Test

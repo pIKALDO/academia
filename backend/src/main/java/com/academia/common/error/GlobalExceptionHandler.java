@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Traduce cada excepción a {@code ProblemDetail} (RFC 7807), tal y como exige
@@ -34,6 +35,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ProblemDetail handleNotFound(NotFoundException ex, HttpServletRequest request) {
         return problemDetail(HttpStatus.NOT_FOUND, "not-found", "Recurso no encontrado", ex.getMessage(), request);
+    }
+
+    /**
+     * Ruta que no corresponde a ningún controlador. Spring MVC la pasa al manejador de
+     * recursos estáticos, que lanza esta excepción; sin este método caía en el catch-all y
+     * salía como 500. El {@code detail} no repite la ruta: ya va en {@code instance}.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ProblemDetail handleNoResource(NoResourceFoundException ex, HttpServletRequest request) {
+        return problemDetail(HttpStatus.NOT_FOUND, "not-found", "Recurso no encontrado",
+                "La ruta solicitada no existe.", request);
     }
 
     @ExceptionHandler(ConflictException.class)
