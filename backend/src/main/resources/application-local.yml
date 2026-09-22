@@ -36,6 +36,10 @@ app:
     # conocida por cualquiera que lea este fichero.
     email: ${ADMIN_EMAIL}
     password: ${ADMIN_PASSWORD}
+  seed:
+    # Datos de demostración (LocalDemoDataSeeder). Vacía por defecto, y entonces el seed se
+    # omite: a diferencia del admin, sin estos datos el backend sigue siendo usable.
+    family-password: ${SEED_FAMILY_PASSWORD:}
 
 logging:
   level:
