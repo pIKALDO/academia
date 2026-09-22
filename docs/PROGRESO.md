@@ -424,12 +424,45 @@ Confirmado con las cuentas del seed que Olena, como `GUARDIAN`, recibe la ficha 
 los otros tutores ni de los contactos de emergencia, `GET /students/{id}` de un estudiante ajeno
 (Lucía) devuelve 404, y `GET /guardians` devuelve 403.
 
-**Pendiente para quien continúe: verificación visual en un navegador real.** Este entorno no
-tiene una herramienta de navegador disponible (mismo límite que en el corte web 1), así que el
-render de las cinco pantallas, la maquetación mobile (tarjetas vs. tabla) y el comportamiento de
-los formularios no se han visto, solo verificado a nivel de API/contrato. Abrir
-`http://localhost:4200`, entrar como `admin@academia.local` y como `olena.kovalenko@familia.local`
-(contraseñas en `.env`) y repetir a ojo lo que este corte verificó por `curl`.
+**Verificación visual: hecha por el usuario en su navegador** (este entorno no tiene herramienta
+de navegador propia). Confirmadas las cinco pantallas, la maquetación mobile y ambos roles.
+
+#### Bug encontrado en la verificación visual: el login necesitaba dos clics
+
+No es de este corte (código de corte web 1, `SessionService.login`), pero bloqueaba probar las
+pantallas nuevas, así que se corrigió aquí. `login()` encadenaba `loadProfile()` con
+`tap(() => this.loadProfile().subscribe())`: una suscripción aparte que el observable devuelto
+no esperaba. `Login.submit()` navegaba a `/` en cuanto `POST /auth/login` respondía 204, con
+`currentUser()` todavía `null` — `authGuard` rebotaba a `/login`. El segundo clic funcionaba
+porque para entonces el `loadProfile()` del primer intento ya había resuelto en segundo plano.
+Corregido encadenando con `switchMap` en vez de `tap`, para que `login()` no complete hasta que
+el perfil esté realmente cargado. Test de regresión en `session.service.spec.ts` (comprueba que
+el observable no emite entre que responde el POST de login y el GET de `/auth/me`).
+
+**Nota aparte, no un bug:** un mismo navegador no puede mantener dos sesiones simultáneas (la
+cookie `SESSION` es única por origen); para probar admin y familia a la vez hace falta una
+ventana de incógnito o un segundo navegador.
+
+#### Tests añadidos en este corte
+
+Antes de este corte solo existía `app.spec.ts` (smoke test heredado). Se añadieron 15 tests en
+5 ficheros, centrados en la lógica no trivial en vez de en el DOM (no hay Testing Library ni
+similar instalado todavía):
+
+- `core/models/student.model.spec.ts` — fija el contrato de los type guards
+  (`isAdminStudent`/`isAdminGuardianLink`/`isAdminEmergencyContact`) que sustituyen el filtrado
+  por rol: si el backend dejara de omitir una clave para `GUARDIAN`, debería romper aquí antes
+  que en producción.
+- `core/services/session.service.spec.ts` — el test de regresión del bug de arriba, con
+  `HttpTestingController` para controlar el orden de las dos peticiones.
+- `core/services/students.service.spec.ts` — construcción de query params de `list()` (status/q
+  se omiten si están vacíos), verbos HTTP de `replaceHousing()`/`delete()`.
+- `core/services/guardians.service.spec.ts` — `link()`/`unlink()` usan `PUT`/`DELETE` sobre la
+  pareja `(studentId, guardianId)`, no un endpoint de acción aparte.
+
+**Pendiente conocido:** sin tests de componentes/DOM (ni de integración E2E) para las pantallas
+nuevas. `ng test` no tiene instalado Angular Testing Library ni Playwright/Cypress; añadirlos es
+una decisión de infraestructura de testing que excede este corte.
 
 ## Corte actual y siguiente paso
 
