@@ -57,10 +57,17 @@ class AuditAspect {
         if (result == null) {
             return null;
         }
+        UUID fromEntityGetter = invokeIfUuid(result, "getId");
+        // Las entidades JPA exponen getId(); los DTO son records (CLAUDE.md: "Records para
+        // DTOs") y su accesor canónico se llama id(), no getId().
+        return fromEntityGetter != null ? fromEntityGetter : invokeIfUuid(result, "id");
+    }
+
+    private UUID invokeIfUuid(Object target, String methodName) {
         try {
-            Method getId = result.getClass().getMethod("getId");
-            Object id = getId.invoke(result);
-            return id instanceof UUID uuid ? uuid : null;
+            Method method = target.getClass().getMethod(methodName);
+            Object value = method.invoke(target);
+            return value instanceof UUID uuid ? uuid : null;
         } catch (ReflectiveOperationException e) {
             return null;
         }

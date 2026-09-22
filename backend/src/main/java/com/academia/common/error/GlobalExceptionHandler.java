@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,11 +37,19 @@ public class GlobalExceptionHandler {
         return problemDetail(HttpStatus.CONFLICT, "conflict", "Conflicto con el estado actual", ex.getMessage(), request);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ProblemDetail handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
-        return problemDetail(HttpStatus.FORBIDDEN, "forbidden", "Operación no permitida",
-                "No tienes permiso para realizar esta operación.", request);
+    @ExceptionHandler(UnprocessableEntityException.class)
+    public ProblemDetail handleUnprocessable(UnprocessableEntityException ex, HttpServletRequest request) {
+        return problemDetail(HttpStatus.UNPROCESSABLE_CONTENT, "unprocessable", "Solicitud no procesable",
+                ex.getMessage(), request);
     }
+
+    // No hay @ExceptionHandler aquí para AuthenticationException ni AccessDeniedException a
+    // propósito: Spring Security registra su propio HandlerExceptionResolver, con prioridad
+    // sobre este @RestControllerAdvice, que intercepta esos dos tipos vengan de donde vengan
+    // (un filtro, o un @PreAuthorize disparado dentro de un controlador o servicio) y los
+    // reenvía a ExceptionTranslationFilter. Un @ExceptionHandler para ellos aquí nunca se
+    // ejecutaría: es SecurityConfig quien construye esas dos respuestas
+    // (authenticationEntryPoint / accessDeniedHandler), con el mismo formato ProblemDetail.
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ProblemDetail handleMaxUploadSize(MaxUploadSizeExceededException ex, HttpServletRequest request) {

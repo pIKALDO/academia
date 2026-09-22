@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.ProblemDetail;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -41,13 +40,10 @@ class GlobalExceptionHandlerTest {
         assertThat(problem.getDetail()).isEqualTo("el email ya existe");
     }
 
-    @Test
-    void una_operacion_no_permitida_responde_403_sin_filtrar_el_mensaje_interno() {
-        ProblemDetail problem = handler.handleAccessDenied(new AccessDeniedException("motivo interno"), request);
-
-        assertThat(problem.getStatus()).isEqualTo(403);
-        assertThat(problem.getDetail()).doesNotContain("motivo interno");
-    }
+    // El 403 de "operación no permitida" ya no se construye aquí: Spring Security intercepta
+    // AccessDeniedException antes de que llegue a este @RestControllerAdvice, vengan de un
+    // filtro o de un @PreAuthorize (ver ProblemDetailSecurityHandlers, en el módulo config, y
+    // el test de extremo a extremo en UserControllerIT).
 
     @Test
     void una_subida_demasiado_grande_responde_413() {

@@ -67,6 +67,7 @@ CREATE TABLE users (
     password_hash   VARCHAR(255),
     role            user_role NOT NULL,
     status          user_status NOT NULL DEFAULT 'PENDING_ACTIVATION',
+    display_name    VARCHAR(150) NOT NULL,
     last_login_at   TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -98,6 +99,12 @@ contraseña: se le envía un enlace de activación. Estado `PENDING_ACTIVATION`.
 
 **`token_hash`, no `token`.** El token de recuperación se guarda hasheado, igual que una contraseña.
 Si alguien accede a la base de datos, no puede usar los tokens pendientes para secuestrar cuentas.
+
+**`display_name` (añadido en V7, corte 1).** Falta en el diseño original de esta sección: la API
+necesita un nombre visible tanto en `/auth/me` como en `uploadedBy.displayName` al representar
+quién subió o revisó un documento (docs/diseno-api.md sección 5.6), y `users` no tenía ningún
+campo de nombre. `NOT NULL` sin valor por defecto porque el proyecto es un prototipo sin datos
+reales que retroalimentar (CLAUDE.md).
 
 **El índice de email es sobre `lower(email)`**, no sobre la columna: evita que `Ana@x.com` y
 `ana@x.com` sean dos cuentas distintas.
@@ -460,6 +467,7 @@ V3__profile_blocks.sql
 V4__documents.sql
 V5__audit_log.sql
 V6__app_role.sql          privilegios del rol de aplicación
+V7__users_display_name.sql   nombre visible del usuario (corte 1)
 ```
 
 Una migración por bloque funcional y no una sola inicial gigante: facilita revisar el historial y

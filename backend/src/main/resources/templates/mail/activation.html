@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Activa tu cuenta</title>
+</head>
+<body style="font-family: sans-serif; color: #1a1a1a;">
+    <p>Hola <span th:text="${displayName}">nombre</span>,</p>
+
+    <p>Se ha creado una cuenta para ti en la plataforma de gestión de la academia. Para
+        activarla y fijar tu contraseña, entra en el siguiente enlace:</p>
+
+    <p>
+        <a th:href="${actionUrl}" href="#">Activar mi cuenta</a>
+    </p>
+
+    <p>Si no esperabas este correo, puedes ignorarlo.</p>
+</body>
+</html>

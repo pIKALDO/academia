@@ -1,5 +1,6 @@
 package com.academia.common.audit;
 
+import com.academia.users.AcademiaUserPrincipal;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -30,10 +31,7 @@ class AuditLogWriter {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     void write(String action, String entityType, UUID entityId, UUID studentId, String ipAddress) {
-        // actor_user_id queda pendiente de completar cuando el módulo de usuarios exponga
-        // el id del principal autenticado (por ahora Spring Security solo conoce el nombre
-        // de usuario, no el UUID de la fila en `users`).
-        UUID actorUserId = null;
+        UUID actorUserId = resolveActorUserId();
         String actorRole = resolveActorRole();
 
         jdbcTemplate.update("""
@@ -41,6 +39,13 @@ class AuditLogWriter {
                 VALUES (?, ?::user_role, ?, ?, ?, ?, ?::inet)
                 """,
                 actorUserId, actorRole, action, entityType, entityId, studentId, ipAddress);
+    }
+
+    private UUID resolveActorUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getPrincipal() instanceof AcademiaUserPrincipal principal
+                ? principal.userId()
+                : null;
     }
 
     private String resolveActorRole() {
