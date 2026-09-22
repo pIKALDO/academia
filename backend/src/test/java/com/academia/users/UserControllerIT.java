@@ -1,7 +1,8 @@
 package com.academia.users;
 
 import com.academia.support.AbstractIntegrationTest;
-import com.academia.users.AuthTestSupport.SesionAutenticada;
+import com.academia.support.AuthTestSupport;
+import com.academia.support.AuthTestSupport.SesionAutenticada;
 import com.academia.users.dto.CreateUserRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

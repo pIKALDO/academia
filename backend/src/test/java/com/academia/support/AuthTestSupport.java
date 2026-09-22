@@ -1,4 +1,4 @@
-package com.academia.users;
+package com.academia.support;
 
 import com.academia.users.dto.LoginRequest;
 import org.springframework.http.MediaType;
@@ -16,12 +16,12 @@ import org.springframework.test.web.servlet.client.RestTestClient;
  * una petición anterior (propia o de otro test), el servidor no vuelve a enviar
  * {@code Set-Cookie} y este método no tiene de dónde leer el token.
  */
-final class AuthTestSupport {
+public final class AuthTestSupport {
 
     private AuthTestSupport() {
     }
 
-    static String obtenerTokenCsrf(RestTestClient client) {
+    public static String obtenerTokenCsrf(RestTestClient client) {
         ExchangeResult result = client.get().uri("/actuator/health")
                 .exchange()
                 .expectStatus().isOk()
@@ -34,7 +34,7 @@ final class AuthTestSupport {
         return cookie.getValue();
     }
 
-    static SesionAutenticada login(RestTestClient client, String csrfToken, String email, String password) {
+    public static SesionAutenticada login(RestTestClient client, String csrfToken, String email, String password) {
         ExchangeResult result = client.post().uri("/api/v1/auth/login")
                 .cookie("XSRF-TOKEN", csrfToken)
                 .header("X-XSRF-TOKEN", csrfToken)
@@ -47,6 +47,6 @@ final class AuthTestSupport {
         return new SesionAutenticada(csrfToken, sessionCookie);
     }
 
-    record SesionAutenticada(String csrfToken, String sessionCookie) {
+    public record SesionAutenticada(String csrfToken, String sessionCookie) {
     }
 }
