@@ -595,8 +595,19 @@ Prácticas concretas:
   aparece en el diff de una pull request, que es la única forma de detectar una ruptura accidental
   antes de desplegarla.
 
-**Para el portfolio:** un enlace a Swagger desplegado y funcionando en el README vale más que
-cualquier descripción escrita. Es lo primero que abre un revisor técnico.
+**Swagger según el entorno.** No es lo mismo un despliegue de demostración que uno de
+producción:
+
+- **Demostración pública, con datos inventados:** Swagger activado. Para el portfolio, un
+  enlace a Swagger desplegado y funcionando en el README vale más que cualquier descripción
+  escrita: es lo primero que abre un revisor técnico.
+- **Producción, con datos reales:** Swagger desactivado, tanto la interfaz
+  (`springdoc.swagger-ui.enabled: false`) como la especificación
+  (`springdoc.api-docs.enabled: false`). Apagar solo la interfaz deja `/v3/api-docs`
+  sirviendo el contrato completo. En una plataforma con datos de menores, describir cada
+  endpoint y cada campo en público es regalar el reconocimiento a un atacante, aunque la
+  autorización siga protegiendo cada endpoint. El contrato sigue disponible para el equipo en
+  `docs/openapi.json`.
 
 ---
 

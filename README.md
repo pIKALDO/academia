@@ -97,6 +97,35 @@ contraseña nunca pasa por una migración: aunque Flyway soporta sustituir place
 valor sigue quedando fijado en el fichero `.sql` ejecutado contra la base de datos, y un
 secreto no debería depender de que nadie mire el histórico de Flyway para encontrarlo.
 
+## Swagger según el entorno
+
+Swagger UI (`/swagger-ui.html`) y la especificación (`/v3/api-docs`) describen la API
+entera: cada endpoint, cada parámetro, cada campo de cada DTO. Útiles para desarrollar,
+pero en un despliegue real le ahorran a un atacante el trabajo de reconocimiento.
+
+| Entorno | Datos | Swagger |
+|---|---|---|
+| Local (`local`) | inventados | activado |
+| Demostración pública (portfolio) | inventados | activado |
+| Producción | reales | **desactivado** |
+
+En producción hay que desactivar **las dos** propiedades, no solo la interfaz:
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: false      # sin esto, /v3/api-docs sigue sirviendo el contrato completo
+  swagger-ui:
+    enabled: false
+```
+
+Desactivar Swagger no sustituye a la autorización: la API sigue siendo la misma y cada
+endpoint se protege por sí mismo. Lo que se evita es regalar el mapa. El contrato sigue
+disponible para quien trabaja en el proyecto en `docs/openapi.json`, que se regenera y se
+verifica en cada build.
+
+El perfil de servidor aún no existe; cuando se cree, debe llevar esta configuración.
+
 ## Tests
 
 ```bash
