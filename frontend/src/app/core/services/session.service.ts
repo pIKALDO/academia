@@ -1,0 +1,47 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
+import { UserProfile } from '../models/user.model';
+
+const API_BASE = '/api/v1/auth';
+
+@Injectable({ providedIn: 'root' })
+export class SessionService {
+  private readonly user = signal<UserProfile | null>(null);
+  /** true mientras no se ha resuelto todavía la comprobación inicial de /auth/me. */
+  private readonly resolved = signal(false);
+
+  readonly currentUser = this.user.asReadonly();
+  readonly isResolved = this.resolved.asReadonly();
+  readonly isAuthenticated = computed(() => this.user() !== null);
+
+  constructor(private readonly http: HttpClient) {}
+
+  login(email: string, password: string): Observable<void> {
+    return this.http
+      .post<void>(`${API_BASE}/login`, { email, password }, { withCredentials: true })
+      .pipe(tap(() => this.loadProfile().subscribe()));
+  }
+
+  logout(): Observable<void> {
+    return this.http
+      .post<void>(`${API_BASE}/logout`, {}, { withCredentials: true })
+      .pipe(tap(() => this.user.set(null)));
+  }
+
+  /** Comprueba la sesión existente (recarga de página). Se llama una vez al arrancar la app. */
+  loadProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${API_BASE}/me`, { withCredentials: true }).pipe(
+      tap({
+        next: (profile) => {
+          this.user.set(profile);
+          this.resolved.set(true);
+        },
+        error: () => {
+          this.user.set(null);
+          this.resolved.set(true);
+        },
+      }),
+    );
+  }
+}

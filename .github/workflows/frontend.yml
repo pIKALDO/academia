@@ -1,0 +1,40 @@
+name: Frontend CI
+
+# Filtrado por ruta: un cambio en backend/ no dispara este workflow, ni al revés
+# (ver .github/workflows/backend.yml).
+on:
+  push:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar los tests
+        run: npm test
+
+      - name: Compilar
+        run: npm run build

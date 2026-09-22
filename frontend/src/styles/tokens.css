@@ -1,0 +1,139 @@
+/*
+ * Tokens de diseño extraídos de frontend/DESIGN.md (sistema visual Stitch,
+ * "Precision Modernism"). Fuente de verdad: DESIGN.md — actualizar ahí primero.
+ */
+:root {
+  /* Color — paleta principal */
+  --color-primary: #0f291e;
+  --color-primary-hover: #1b4332;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #0f291e;
+  --color-secondary: #545f73;
+  --color-tertiary: #65a30d;
+  --color-background: #faf8ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container: #eaedff;
+  --color-on-surface: #131b2e;
+  --color-on-surface-variant: #424844;
+  --color-outline: #727974;
+  --color-outline-variant: #c2c8c2;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+
+  /* Color — indicadores de estado operativo */
+  --color-status-success-text: #15803d;
+  --color-status-success-bg: #f0fdf4;
+  --color-status-warning-text: #b45309;
+  --color-status-warning-bg: #fffbeb;
+  --color-status-critical-text: #b91c1c;
+  --color-status-critical-bg: #fef2f2;
+  --color-status-info-text: #0369a1;
+  --color-status-info-bg: #f0f9ff;
+
+  /* Tipografía */
+  --font-family-base: 'Inter', system-ui, sans-serif;
+
+  --font-headline-xl-size: 28px;
+  --font-headline-xl-line: 36px;
+  --font-headline-xl-tracking: -0.02em;
+  --font-headline-xl-weight: 700;
+
+  --font-headline-xl-mobile-size: 22px;
+  --font-headline-xl-mobile-line: 28px;
+  --font-headline-xl-mobile-weight: 700;
+
+  --font-headline-lg-size: 20px;
+  --font-headline-lg-line: 28px;
+  --font-headline-lg-weight: 600;
+
+  --font-headline-md-size: 16px;
+  --font-headline-md-line: 24px;
+  --font-headline-md-weight: 600;
+
+  --font-body-lg-size: 15px;
+  --font-body-lg-line: 22px;
+  --font-body-lg-weight: 400;
+
+  --font-body-md-size: 13px;
+  --font-body-md-line: 18px;
+  --font-body-md-weight: 400;
+  --font-body-md-medium-weight: 500;
+
+  --font-label-lg-size: 12px;
+  --font-label-lg-line: 16px;
+  --font-label-lg-tracking: 0.02em;
+  --font-label-lg-weight: 600;
+
+  --font-label-md-size: 11px;
+  --font-label-md-line: 14px;
+  --font-label-md-tracking: 0.04em;
+  --font-label-md-weight: 600;
+
+  --font-caption-size: 11px;
+  --font-caption-line: 14px;
+  --font-caption-weight: 400;
+
+  /* Espaciado */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1.25rem;
+  --space-xl: 2rem;
+  --gutter: 1rem;
+  --gutter-desktop: 1.25rem;
+  --margin: 1rem;
+  --margin-desktop: 2rem;
+
+  /* Radios */
+  --radius-sm: 0.125rem;
+  --radius-default: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Elevación */
+  --shadow-tier-1: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --border-tier-1: 1px solid #e2e8f0;
+  --shadow-tier-2: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --border-tier-2: 1px solid #cbd5e1;
+  --shadow-tier-3: 0 10px 15px -3px rgba(15, 23, 42, 0.12), 0 4px 6px -4px rgba(15, 23, 42, 0.08);
+  --backdrop-tier-3: rgba(15, 23, 42, 0.45);
+
+  /* Botones */
+  --button-height-compact: 32px;
+  --button-height-default: 36px;
+  --button-secondary-bg: #ffffff;
+  --button-secondary-text: #1e293b;
+  --button-secondary-border: #cbd5e1;
+  --button-tertiary-text: #475569;
+  --button-destructive-bg: #fef2f2;
+  --button-destructive-text: #b91c1c;
+  --button-destructive-border: #f87171;
+  --button-focus-ring: 2px solid #65a30d;
+
+  /* Inputs */
+  --input-height: 34px;
+  --input-border: #cbd5e1;
+  --input-focus-border: #0f291e;
+  --input-focus-ring: 2px solid rgba(15, 41, 30, 0.15);
+
+  /* Tablas de datos */
+  --table-row-height: 36px;
+  --table-row-height-dense: 32px;
+  --table-header-bg: #f8fafc;
+  --table-header-text: #475569;
+  --table-header-border: #cbd5e1;
+  --table-row-hover-bg: #f1f5f9;
+  --table-row-selected-bg: #ecfdf5;
+  --table-row-selected-border: #15803d;
+
+  /* Badges de estado */
+  --badge-height: 20px;
+  --badge-confirmed-bg: #dcfce7;
+  --badge-confirmed-text: #166534;
+  --badge-blocked-bg: #fee2e2;
+  --badge-blocked-text: #991b1b;
+  --badge-unassigned-bg: #f1f5f9;
+  --badge-unassigned-text: #475569;
+}
