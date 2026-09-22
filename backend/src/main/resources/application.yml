@@ -88,6 +88,12 @@ springdoc:
   writer-with-order-by-keys: true
   swagger-ui:
     path: /swagger-ui.html
+    # Sin esto, "Try it out" falla con 403 en toda petición que modifica estado (login
+    # incluido): la protección CSRF exige la cabecera X-XSRF-TOKEN, y Swagger UI no la envía
+    # por su cuenta. Con csrf.enabled lee la cookie XSRF-TOKEN y la reenvía, igual que el
+    # interceptor de Angular. No relaja nada: solo el mismo origen puede leer esa cookie.
+    csrf:
+      enabled: true
   api-docs:
     path: /v3/api-docs
 

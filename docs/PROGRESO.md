@@ -302,6 +302,12 @@ el seed carga, y por `curl`: Olena ve a Danylo y Sofiia, y Lucía le da 404; Tar
 y Sofiia (vinculado sin acceso) y Lucía le dan 404; Marta solo ve a Lucía. La vista de familia
 no trae `coachNotes` ni `housing`, y la de admin sí.
 
+**Verificado también a mano en Swagger UI** (2026-09-22), con las cuentas del seed: Olena →
+Danylo 200 sin `coachNotes` ni `housing`; Olena → Lucía 404; Taras → Sofiia 404 y Danylo 200.
+Para que funcione "Try it out" hizo falta `springdoc.swagger-ui.csrf.enabled: true`: sin ella,
+Swagger UI no envía `X-XSRF-TOKEN` y toda petición que modifica estado (el login incluido)
+responde 403.
+
 ## Corte actual y siguiente paso
 
 **Corte actual:** ninguno en marcha. Corte 2 cerrado (arriba).
