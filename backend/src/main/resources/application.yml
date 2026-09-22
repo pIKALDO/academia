@@ -81,6 +81,11 @@ management:
       enabled: false
 
 springdoc:
+  # Ordena alfabéticamente todas las claves del JSON (paths, esquemas, propiedades,
+  # respuestas). Sin esto, springdoc emite los paths en el orden en que registra los
+  # controladores, y añadir un endpoint reordena los existentes: el diff de
+  # docs/openapi.json en la pull request mezcla cambios reales con movimientos.
+  writer-with-order-by-keys: true
   swagger-ui:
     path: /swagger-ui.html
   api-docs:

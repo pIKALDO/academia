@@ -1,8 +1,8 @@
 {
   "openapi" : "3.1.0",
   "info" : {
-    "title" : "API de gestión de la academia",
     "description" : "API privada de gestión de estudiantes, familias y documentación.",
+    "title" : "API de gestión de la academia",
     "version" : "1.0"
   },
   "servers" : [ {
@@ -12,202 +12,8 @@
     "session" : [ ]
   } ],
   "paths" : {
-    "/api/v1/users" : {
-      "get" : {
-        "tags" : [ "Usuarios" ],
-        "operationId" : "list",
-        "parameters" : [ {
-          "name" : "role",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
-          }
-        }, {
-          "name" : "status",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "enum" : [ "ACTIVE", "DISABLED", "PENDING_ACTIVATION" ]
-          }
-        }, {
-          "name" : "page",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PagedResponseUserSummaryDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "Usuarios" ],
-        "operationId" : "create",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateUserRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserDetailDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/users/{id}/enable" : {
-      "post" : {
-        "tags" : [ "Usuarios" ],
-        "operationId" : "enable",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/users/{id}/disable" : {
-      "post" : {
-        "tags" : [ "Usuarios" ],
-        "operationId" : "disable",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/password-reset" : {
-      "post" : {
-        "tags" : [ "Autenticación" ],
-        "operationId" : "requestPasswordReset",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/PasswordResetRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/password-reset/confirm" : {
-      "post" : {
-        "tags" : [ "Autenticación" ],
-        "operationId" : "confirmPasswordReset",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/PasswordResetConfirmRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/logout" : {
-      "post" : {
-        "tags" : [ "Autenticación" ],
-        "operationId" : "logout",
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/login" : {
-      "post" : {
-        "tags" : [ "Autenticación" ],
-        "operationId" : "login",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
     "/api/v1/auth/activate" : {
       "post" : {
-        "tags" : [ "Autenticación" ],
         "operationId" : "activate",
         "requestBody" : {
           "content" : {
@@ -223,16 +29,187 @@
           "200" : {
             "description" : "OK"
           }
-        }
+        },
+        "tags" : [ "Autenticación" ]
+      }
+    },
+    "/api/v1/auth/login" : {
+      "post" : {
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Autenticación" ]
+      }
+    },
+    "/api/v1/auth/logout" : {
+      "post" : {
+        "operationId" : "logout",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Autenticación" ]
+      }
+    },
+    "/api/v1/auth/me" : {
+      "get" : {
+        "operationId" : "me",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserProfileDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Autenticación" ]
+      }
+    },
+    "/api/v1/auth/password-reset" : {
+      "post" : {
+        "operationId" : "requestPasswordReset",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Autenticación" ]
+      }
+    },
+    "/api/v1/auth/password-reset/confirm" : {
+      "post" : {
+        "operationId" : "confirmPasswordReset",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordResetConfirmRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Autenticación" ]
+      }
+    },
+    "/api/v1/users" : {
+      "get" : {
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "role",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "ACTIVE", "DISABLED", "PENDING_ACTIVATION" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseUserSummaryDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Usuarios" ]
+      },
+      "post" : {
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDetailDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Usuarios" ]
       }
     },
     "/api/v1/users/{id}" : {
       "get" : {
-        "tags" : [ "Usuarios" ],
         "operationId" : "get",
         "parameters" : [ {
-          "name" : "id",
           "in" : "path",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "type" : "string",
@@ -241,23 +218,23 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "OK",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/UserDetailDto"
                 }
               }
-            }
+            },
+            "description" : "OK"
           }
-        }
+        },
+        "tags" : [ "Usuarios" ]
       },
       "patch" : {
-        "tags" : [ "Usuarios" ],
         "operationId" : "update",
         "parameters" : [ {
-          "name" : "id",
           "in" : "path",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "type" : "string",
@@ -276,60 +253,103 @@
         },
         "responses" : {
           "200" : {
-            "description" : "OK",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/UserDetailDto"
                 }
               }
-            }
+            },
+            "description" : "OK"
           }
-        }
+        },
+        "tags" : [ "Usuarios" ]
+      }
+    },
+    "/api/v1/users/{id}/disable" : {
+      "post" : {
+        "operationId" : "disable",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Usuarios" ]
+      }
+    },
+    "/api/v1/users/{id}/enable" : {
+      "post" : {
+        "operationId" : "enable",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Usuarios" ]
       }
     },
     "/test/protected" : {
       "get" : {
-        "tags" : [ "protected-test-controller" ],
         "operationId" : "protegido",
         "responses" : {
           "200" : {
-            "description" : "OK",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "type" : "string"
                 }
               }
-            }
+            },
+            "description" : "OK"
           }
-        }
-      }
-    },
-    "/api/v1/auth/me" : {
-      "get" : {
-        "tags" : [ "Autenticación" ],
-        "operationId" : "me",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserProfileDto"
-                }
-              }
-            }
-          }
-        }
+        },
+        "tags" : [ "protected-test-controller" ]
       }
     }
   },
   "components" : {
     "schemas" : {
+      "ActivateAccountRequest" : {
+        "type" : "object",
+        "properties" : {
+          "newPassword" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 8
+          },
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "newPassword", "token" ]
+      },
       "CreateUserRequest" : {
         "type" : "object",
         "properties" : {
+          "displayName" : {
+            "type" : "string",
+            "maxLength" : 150,
+            "minLength" : 0
+          },
           "email" : {
             "type" : "string",
             "format" : "email",
@@ -339,75 +359,9 @@
           "role" : {
             "type" : "string",
             "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
-          },
-          "displayName" : {
-            "type" : "string",
-            "maxLength" : 150,
-            "minLength" : 0
           }
         },
         "required" : [ "displayName", "email", "role" ]
-      },
-      "UserDetailDto" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "email" : {
-            "type" : "string"
-          },
-          "displayName" : {
-            "type" : "string"
-          },
-          "role" : {
-            "type" : "string",
-            "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
-          },
-          "status" : {
-            "type" : "string",
-            "enum" : [ "ACTIVE", "DISABLED", "PENDING_ACTIVATION" ]
-          },
-          "lastLoginAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "updatedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        }
-      },
-      "PasswordResetRequest" : {
-        "type" : "object",
-        "properties" : {
-          "email" : {
-            "type" : "string",
-            "format" : "email",
-            "minLength" : 1
-          }
-        },
-        "required" : [ "email" ]
-      },
-      "PasswordResetConfirmRequest" : {
-        "type" : "object",
-        "properties" : {
-          "token" : {
-            "type" : "string",
-            "minLength" : 1
-          },
-          "newPassword" : {
-            "type" : "string",
-            "maxLength" : 100,
-            "minLength" : 8
-          }
-        },
-        "required" : [ "newPassword", "token" ]
       },
       "LoginRequest" : {
         "type" : "object",
@@ -423,35 +377,6 @@
           }
         },
         "required" : [ "email", "password" ]
-      },
-      "ActivateAccountRequest" : {
-        "type" : "object",
-        "properties" : {
-          "token" : {
-            "type" : "string",
-            "minLength" : 1
-          },
-          "newPassword" : {
-            "type" : "string",
-            "maxLength" : 100,
-            "minLength" : 8
-          }
-        },
-        "required" : [ "newPassword", "token" ]
-      },
-      "UpdateUserRequest" : {
-        "type" : "object",
-        "properties" : {
-          "displayName" : {
-            "type" : "string",
-            "maxLength" : 150,
-            "minLength" : 0
-          },
-          "role" : {
-            "type" : "string",
-            "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
-          }
-        }
       },
       "PageInfo" : {
         "type" : "object",
@@ -488,18 +413,97 @@
           }
         }
       },
-      "UserSummaryDto" : {
+      "PasswordResetConfirmRequest" : {
         "type" : "object",
         "properties" : {
-          "id" : {
+          "newPassword" : {
             "type" : "string",
-            "format" : "uuid"
+            "maxLength" : 100,
+            "minLength" : 8
+          },
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "newPassword", "token" ]
+      },
+      "PasswordResetRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email" ]
+      },
+      "UpdateUserRequest" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string",
+            "maxLength" : 150,
+            "minLength" : 0
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
+          }
+        }
+      },
+      "UserDetailDto" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "displayName" : {
+            "type" : "string"
           },
           "email" : {
             "type" : "string"
           },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastLoginAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "ACTIVE", "DISABLED", "PENDING_ACTIVATION" ]
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "UserProfileDto" : {
+        "type" : "object",
+        "properties" : {
           "displayName" : {
             "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastLoginAt" : {
+            "type" : "string",
+            "format" : "date-time"
           },
           "role" : {
             "type" : "string",
@@ -511,18 +515,18 @@
           }
         }
       },
-      "UserProfileDto" : {
+      "UserSummaryDto" : {
         "type" : "object",
         "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
+          "displayName" : {
+            "type" : "string"
           },
           "email" : {
             "type" : "string"
           },
-          "displayName" : {
-            "type" : "string"
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
           },
           "role" : {
             "type" : "string",
@@ -531,19 +535,15 @@
           "status" : {
             "type" : "string",
             "enum" : [ "ACTIVE", "DISABLED", "PENDING_ACTIVATION" ]
-          },
-          "lastLoginAt" : {
-            "type" : "string",
-            "format" : "date-time"
           }
         }
       }
     },
     "securitySchemes" : {
       "session" : {
-        "type" : "apiKey",
+        "in" : "cookie",
         "name" : "SESSION",
-        "in" : "cookie"
+        "type" : "apiKey"
       }
     }
   }
