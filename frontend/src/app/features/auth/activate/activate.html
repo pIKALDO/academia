@@ -1,0 +1,25 @@
+<div class="auth-screen">
+  <div class="auth-panel">
+    <h1 class="headline">Activa tu cuenta</h1>
+    <p class="subtitle">Elige una contraseña para completar el alta</p>
+
+    @if (tokenMissing) {
+      <p class="error-text">El enlace no es válido. Contacta con administración.</p>
+    } @else if (done()) {
+      <p class="success-text">Cuenta activada. Redirigiendo al inicio de sesión…</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+        <label class="field">
+          <span class="label">Contraseña</span>
+          <input type="password" formControlName="newPassword" autocomplete="new-password" />
+        </label>
+
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || submitting()">
+          {{ submitting() ? 'Activando…' : 'Activar cuenta' }}
+        </button>
+      </form>
+    }
+
+    <a class="link" routerLink="/login">Volver a iniciar sesión</a>
+  </div>
+</div>

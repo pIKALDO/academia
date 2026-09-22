@@ -1,0 +1,27 @@
+@import './styles/tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-family-base);
+  font-size: var(--font-body-md-size);
+  line-height: var(--font-body-md-line);
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+}

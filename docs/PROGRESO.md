@@ -110,13 +110,73 @@ que no hace falta pedir uno nuevo, y pedirlo fallaría de todos modos porque el 
 una cookie `XSRF-TOKEN` válida y el servidor no reenvía `Set-Cookie` para un valor que no ha
 cambiado.
 
+### Corte web 1 — esqueleto del frontend y autenticación
+
+Incluye:
+
+- Proyecto Angular 22 creado en `frontend/` (standalone, sin NgModules, PWA vía
+  `@angular/pwa`/`ngsw-config.json`), sin tocar `DESIGN.md` ni `design/` ya existentes.
+- `frontend/src/styles/tokens.css`: tokens de `DESIGN.md` trasladados a variables CSS
+  (color, tipografía, espaciado, radios, elevación, componentes recurrentes). Importado desde
+  `src/styles.css`, que además fija fondo, tipografía base y `box-sizing` globales. Fuente
+  Inter cargada desde Google Fonts en `index.html`.
+- `proxy.conf.json`: `/api` → `http://localhost:8080`, sin `changeOrigin`, para que la cookie
+  de sesión funcione en el mismo origen desde el punto de vista del navegador. Registrado en
+  `angular.json` (`serve.options.proxyConfig`).
+- `core/interceptors/csrf.interceptor.ts`: lee la cookie `XSRF-TOKEN` (la que escribe
+  `CookieCsrfTokenRepository.withHttpOnlyFalse()` en el backend) y la reenvía en
+  `X-XSRF-TOKEN` para toda petición a `/api/**` que no sea `GET/HEAD/OPTIONS/TRACE`.
+- `core/interceptors/error.interceptor.ts`: traduce `ProblemDetail` a un mensaje mostrado en
+  `shared/error-banner` (señal global en `NotificationService`). Usa `detail` cuando el
+  backend lo manda (ya en español) y una tabla de mensajes de reserva por código de estado en
+  caso contrario. Silencia el 401 de `/auth/login` (credenciales incorrectas, ya lo maneja el
+  propio formulario) y el de `/auth/me` en el arranque (sesión inexistente, no es un error).
+- `core/services/session.service.ts`: señal `currentUser` (`UserProfile | null`), `login`,
+  `logout`, `loadProfile` (`GET /auth/me`). `loadProfile` se ejecuta una vez con
+  `provideAppInitializer` en `app.config.ts`, antes de que el router resuelva la primera
+  ruta: así el guard de autenticación conoce el estado real ya en la primera navegación,
+  incluida una recarga de página.
+- `core/services/auth.service.ts`: `requestPasswordReset`, `confirmPasswordReset`, `activate`
+  (los tres endpoints de `/auth` que no dependen de sesión).
+- `core/guards/auth.guard.ts` (exige sesión), `core/guards/guest.guard.ts` (redirige fuera de
+  login/activación/recuperación si ya hay sesión), `core/guards/role.guard.ts` (fábrica
+  `roleGuard(['ADMIN'])`, sin usar todavía — no hay ninguna pantalla restringida por rol en
+  este corte, pero la queda lista para `students`/`guardians`). Los guards solo deciden
+  navegación; la autorización real sigue viviendo en `AccessService` (regla no negociable
+  nº2), y el front nunca oculta un campo que la API sí devuelve (regla nº3).
+- Pantallas: `features/auth/login`, `features/auth/password-reset` (petición y confirmación,
+  como dos componentes porque son dos formularios y dos estados distintos, no una pantalla con
+  ramas), `features/auth/activate`, `features/home` (nombre y rol del usuario, botón de
+  cerrar sesión). Todas standalone, `ReactiveFormsModule`, señales para el estado local.
+  CSS compartido de las pantallas de autenticación en `shared/styles/auth-screen.css`
+  (`@import` desde cada componente: mismo layout, sin repetir declaraciones).
+- `.github/workflows/frontend.yml`: filtrado por `frontend/**`, `npm ci` + `npm test` (Vitest,
+  vía el builder `@angular/build:unit-test`, no necesita `--watch=false`: ya corre una sola
+  vez por defecto) + `npm run build`.
+
+**Verificado en esta máquina** con el backend real arrancado (`docker compose up -d` +
+`mvn spring-boot:run -Dspring-boot.run.profiles=local`) y el proxy de `ng serve`: login con
+el admin de `LocalAdminBootstrapper` devuelve `204` y las cookies `SESSION`/`XSRF-TOKEN`
+correctas; `GET /auth/me` a través del proxy devuelve el perfil mientras la cookie de sesión
+sigue viva (la sesión sobrevive a una recarga porque `loadProfile` se repite en cada arranque
+de la app); `POST /auth/logout` seguido de `GET /auth/me` devuelve `401`. Verificado por
+`curl` contra `localhost:4200` (que es el proxy), no en un navegador real: este entorno no
+tiene una herramienta de navegador disponible. **Pendiente para quien continúe:** abrir
+`http://localhost:4200` en un navegador y repetir el flujo (login → recargar → logout) antes
+de dar el corte por completamente cerrado.
+
+**Build y tests:** `ng build --configuration development` y `ng test` pasan en verde.
+
 ## Corte actual y siguiente paso
 
-**Corte actual:** ninguno en marcha. Corte 1 cerrado.
+**Corte actual:** ninguno en marcha. Corte web 1 cerrado (con la verificación en navegador
+real pendiente, ver arriba).
 
 **Siguiente:** por decidir. Candidatos naturales según CLAUDE.md: `students` (fichas de
 estudiantes y bloques de ficha) o `guardians` (tutores y vínculos), ambos ya con migraciones en
-`V2`/`V3`.
+`V2`/`V3`. En el front, cualquiera de los dos implica generar los tipos TypeScript desde
+`docs/openapi.json` (todavía no exportado: no hay `springdoc` corriendo contra endpoints de
+`students`/`documents`) y un servicio de API por dominio.
 
 ## Decisiones tomadas que no están en los documentos de diseño
 
@@ -161,4 +221,7 @@ estudiantes y bloques de ficha) o `guardians` (tutores y vínculos), ambos ya co
 - Perfil de servidor (mencionado como "aún no creado" en el comentario de
   `application.yml`) no existe todavía — se añadirá cuando toque desplegar contra
   Cloudflare R2 y la base de datos de producción.
-- `frontend/` no existe todavía en el repositorio (no incluido en el alcance del corte 0).
+- Verificación en navegador real del flujo de login/recarga/logout del corte web 1 (ver
+  arriba) — solo probado por `curl` en esta máquina.
+- `frontend/` no tiene todavía pantallas de `students` ni `documents`: fuera de alcance del
+  corte web 1 a propósito, su API aún no existe.

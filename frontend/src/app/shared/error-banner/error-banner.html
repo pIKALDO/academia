@@ -1,0 +1,10 @@
+@if (notifications.errors().length) {
+  <div class="banner-stack">
+    @for (notification of notifications.errors(); track notification.id) {
+      <div class="banner" role="alert">
+        <span>{{ notification.message }}</span>
+        <button type="button" class="dismiss" (click)="dismiss(notification.id)" aria-label="Cerrar">×</button>
+      </div>
+    }
+  </div>
+}
