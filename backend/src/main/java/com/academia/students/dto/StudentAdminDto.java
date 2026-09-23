@@ -1,5 +1,6 @@
 package com.academia.students.dto;
 
+import com.academia.documents.dto.DocumentsSummaryDto;
 import com.academia.guardians.GuardianEntity;
 import com.academia.guardians.GuardianRelationship;
 import com.academia.guardians.StudentGuardianEntity;
@@ -26,6 +27,7 @@ public record StudentAdminDto(
         UUID id,
         String firstName,
         String lastName,
+        @Nullable String photoUrl,
         @Nullable LocalDate birthDate,
         @Nullable String nationality,
         StudentStatus status,
@@ -36,6 +38,7 @@ public record StudentAdminDto(
         @Nullable SportsProfileDto sportsProfile,
         @Nullable EducationDto education,
         @Nullable HousingDto housing,
+        DocumentsSummaryDto documentsSummary,
         Instant createdAt,
         Instant updatedAt) implements StudentDetailDto {
 
@@ -70,12 +73,14 @@ public record StudentAdminDto(
         }
     }
 
-    public static StudentAdminDto from(StudentSheet sheet) {
+    public static StudentAdminDto from(StudentSheet sheet, @Nullable String photoUrl,
+            DocumentsSummaryDto documentsSummary) {
         StudentEntity s = sheet.student();
         return new StudentAdminDto(
                 s.getId(),
                 s.getFirstName(),
                 s.getLastName(),
+                photoUrl,
                 s.getBirthDate(),
                 s.getNationality(),
                 s.getStatus(),
@@ -87,6 +92,7 @@ public record StudentAdminDto(
                 sheet.sportsProfile().map(SportsProfileDto::from).orElse(null),
                 sheet.education().map(EducationDto::from).orElse(null),
                 sheet.housing().map(HousingDto::from).orElse(null),
+                documentsSummary,
                 s.getCreatedAt(),
                 s.getUpdatedAt());
     }

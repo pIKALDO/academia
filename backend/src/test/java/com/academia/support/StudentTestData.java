@@ -1,5 +1,7 @@
 package com.academia.support;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -85,6 +87,16 @@ public class StudentTestData {
                 INSERT INTO emergency_contacts (id, student_id, name, relationship, phone, notes, priority)
                 VALUES (?, ?, ?, 'Abuela', '+34 600 000 001', ?, 1)
                 """, UUID.randomUUID(), studentId, name, notes);
+    }
+
+    /** Documento de prueba, sin fichero salvo que el propio test lo suba: id, categoría y estado a elegir. */
+    public UUID document(UUID studentId, String category, String status, LocalDate expiresAt) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO documents (id, student_id, category, name, status, expires_at)
+                VALUES (?, ?, ?::document_category, 'Documento de prueba.pdf', ?::document_status, ?)
+                """, id, studentId, category, status, expiresAt == null ? null : Date.valueOf(expiresAt));
+        return id;
     }
 
     /** Estudiante con tutor: devuelve el email de la cuenta del tutor. */

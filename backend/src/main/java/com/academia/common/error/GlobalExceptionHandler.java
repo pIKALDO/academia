@@ -59,6 +59,12 @@ public class GlobalExceptionHandler {
                 ex.getMessage(), request);
     }
 
+    @ExceptionHandler(UnsupportedMediaTypeException.class)
+    public ProblemDetail handleUnsupportedMediaType(UnsupportedMediaTypeException ex, HttpServletRequest request) {
+        return problemDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "unsupported-media-type", "Tipo de fichero no admitido",
+                ex.getMessage(), request);
+    }
+
     // AuthenticationException/AccessDeniedException lanzadas desde un filtro (petición sin
     // sesión, o AuthorizationFilter al final de la cadena) nunca llegan aquí: las captura
     // ExceptionTranslationFilter y las resuelve con authenticationEntryPoint/accessDeniedHandler

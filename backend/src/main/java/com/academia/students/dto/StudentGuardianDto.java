@@ -1,5 +1,6 @@
 package com.academia.students.dto;
 
+import com.academia.documents.dto.DocumentsSummaryDto;
 import com.academia.guardians.GuardianEntity;
 import com.academia.guardians.GuardianRelationship;
 import com.academia.guardians.StudentGuardianEntity;
@@ -35,6 +36,7 @@ public record StudentGuardianDto(
         UUID id,
         String firstName,
         String lastName,
+        @Nullable String photoUrl,
         @Nullable LocalDate birthDate,
         @Nullable String nationality,
         StudentStatus status,
@@ -42,7 +44,8 @@ public record StudentGuardianDto(
         List<LinkedGuardian> guardians,
         List<EmergencyContactGuardianDto> emergencyContacts,
         @Nullable SportsProfile sportsProfile,
-        @Nullable Education education) implements StudentDetailDto {
+        @Nullable Education education,
+        DocumentsSummaryDto documentsSummary) implements StudentDetailDto {
 
     @Schema(name = "StudentGuardianContact")
     public record Contact(@Nullable String phone, @Nullable String email) {
@@ -83,12 +86,14 @@ public record StudentGuardianDto(
         }
     }
 
-    public static StudentGuardianDto from(StudentSheet sheet) {
+    public static StudentGuardianDto from(StudentSheet sheet, @Nullable String photoUrl,
+            DocumentsSummaryDto documentsSummary) {
         StudentEntity s = sheet.student();
         return new StudentGuardianDto(
                 s.getId(),
                 s.getFirstName(),
                 s.getLastName(),
+                photoUrl,
                 s.getBirthDate(),
                 s.getNationality(),
                 s.getStatus(),
@@ -96,6 +101,7 @@ public record StudentGuardianDto(
                 sheet.guardians().stream().map(LinkedGuardian::from).toList(),
                 sheet.emergencyContacts().stream().map(EmergencyContactGuardianDto::from).toList(),
                 sheet.sportsProfile().map(SportsProfile::from).orElse(null),
-                sheet.education().map(Education::from).orElse(null));
+                sheet.education().map(Education::from).orElse(null),
+                documentsSummary);
     }
 }

@@ -51,6 +51,21 @@ services:
       timeout: 5s
       retries: 10
 
+  # Crea el bucket de documentación al arrancar, si no existe ya: sin esto, la primera subida
+  # fallaría con "bucket does not exist" en un entorno recién levantado. Contenedor de un solo
+  # uso, no un servicio de fondo (sale en cuanto termina `mc mb`).
+  createbuckets:
+    # Igual que minio/minio: minio/mc también se retiró de Docker Hub, distribución en quay.io.
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-academia} ${MINIO_ROOT_PASSWORD:-academia_dev_minio};
+      mc mb --ignore-existing local/${STORAGE_BUCKET:-academia-documents};
+      "
+
   # Servidor SMTP de pruebas: captura los correos de avisos de caducidad sin enviarlos de
   # verdad. Interfaz web en http://localhost:8025.
   mailpit:

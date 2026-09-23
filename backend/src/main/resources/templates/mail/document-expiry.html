@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Aviso de caducidad de documentación</title>
+</head>
+<body style="font-family: sans-serif; color: #1a1a1a;">
+    <p>Hola <span th:text="${guardianName}">nombre</span>,</p>
+
+    <p>
+        El documento <strong th:text="${documentName}">Pasaporte</strong>
+        (<span th:text="${documentCategory}">PASSPORT</span>) de
+        <strong th:text="${studentName}">estudiante</strong>
+        caduca el <span th:text="${expiresAt}">2026-03-14</span>
+        (dentro de <span th:text="${daysUntilExpiry}">30</span> días).
+    </p>
+
+    <p>Puedes consultar la ficha del estudiante en la plataforma:</p>
+
+    <p>
+        <a th:href="${actionUrl}" href="#">Ver ficha del estudiante</a>
+    </p>
+
+    <p>Si el documento ya se ha renovado, puedes ignorar este aviso.</p>
+</body>
+</html>

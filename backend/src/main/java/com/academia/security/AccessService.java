@@ -35,9 +35,12 @@ import org.springframework.stereotype.Component;
 public class AccessService {
 
     private final StudentAccessRepository studentAccessRepository;
+    private final DocumentAccessRepository documentAccessRepository;
 
-    public AccessService(StudentAccessRepository studentAccessRepository) {
+    public AccessService(StudentAccessRepository studentAccessRepository,
+            DocumentAccessRepository documentAccessRepository) {
         this.studentAccessRepository = studentAccessRepository;
+        this.documentAccessRepository = documentAccessRepository;
     }
 
     /**
@@ -106,16 +109,46 @@ public class AccessService {
         return hasRole(UserRole.ADMIN);
     }
 
-    public boolean canUploadDocument(UUID studentId) {
-        return currentPrincipal().map(principal -> switch (principal.role()) {
-            case ADMIN -> true;
-            case GUARDIAN -> studentAccessRepository.isAccessibleByGuardian(studentId, principal.userId());
-            case STUDENT -> false;
-        }).orElse(false);
+    /**
+     * Regla de visibilidad, no de operación: subir a un estudiante ajeno debe dar 404, igual
+     * que verlo (regla no negociable nº1). Hoy "puedo ver" y "puedo subir" coinciden para
+     * cualquier rol, así que se apoya directamente en {@link #canViewStudent}; si algún día
+     * hiciera falta una restricción de subida distinta de la de visibilidad (p. ej. un rol que
+     * ve pero no puede subir), se añadiría aquí por encima, sin tocar la decisión de
+     * visibilidad en sí.
+     */
+    public StudentAccessDecision canUploadDocument(UUID studentId) {
+        return canViewStudent(studentId);
     }
 
     /** POST /documents/{id}/review es ADMIN únicamente (docs/diseno-api.md sección 5.6). */
     public boolean canReviewDocument(UUID documentId) {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /**
+     * Documento de un estudiante ajeno → 404 (docs/diseno-api.md sección 3.1), igual que
+     * {@link #canViewStudent}: se resuelve el estudiante propietario y se reutiliza la misma
+     * regla, en vez de duplicar el switch por rol.
+     */
+    public StudentAccessDecision canViewDocument(UUID documentId) {
+        return documentAccessRepository.findOwningStudentId(documentId)
+                .map(this::canViewStudent)
+                .orElse(StudentAccessDecision.HIDDEN);
+    }
+
+    /** DELETE /documents/{id}: ADMIN únicamente (docs/diseno-api.md sección 5.6). */
+    public boolean canDeleteDocument(UUID documentId) {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /** PATCH /documents/{id}: ADMIN únicamente. */
+    public boolean canEditDocument(UUID documentId) {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /** GET /documents/expiring: ADMIN únicamente — vista de gestión de todos los estudiantes. */
+    public boolean canViewExpiringDocuments() {
         return hasRole(UserRole.ADMIN);
     }
 

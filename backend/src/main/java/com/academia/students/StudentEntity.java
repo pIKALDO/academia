@@ -27,9 +27,8 @@ import org.hibernate.type.SqlTypes;
  * un estudiante borrado deja de existir para todo el mundo, administrador incluido; decisión
  * a revisar en el corte de documentos (docs/PROGRESO.md).
  *
- * <p>No se mapean {@code user_id} (portal del estudiante, fase 2), {@code photo_key} (llega
- * con el almacenamiento, en el corte de documentos) ni {@code left_at} (sin caso de uso en
- * fase 1): {@code ddl-auto: validate} solo comprueba las columnas mapeadas.
+ * <p>No se mapean {@code user_id} (portal del estudiante, fase 2) ni {@code left_at} (sin caso
+ * de uso en fase 1): {@code ddl-auto: validate} solo comprueba las columnas mapeadas.
  */
 @Entity
 @Table(name = "students")
@@ -80,6 +79,9 @@ public class StudentEntity {
 
     @Column(name = "enrolled_at")
     private LocalDate enrolledAt;
+
+    @Column(name = "photo_key", length = 500)
+    private String photoKey;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
@@ -151,6 +153,10 @@ public class StudentEntity {
         this.country = country;
     }
 
+    public void changePhotoKey(String photoKey) {
+        this.photoKey = photoKey;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -201,6 +207,10 @@ public class StudentEntity {
 
     public LocalDate getEnrolledAt() {
         return enrolledAt;
+    }
+
+    public String getPhotoKey() {
+        return photoKey;
     }
 
     public Instant getCreatedAt() {

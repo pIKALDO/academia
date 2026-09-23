@@ -83,7 +83,9 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
-		<!-- Almacenamiento S3-compatible: MinIO en local, Cloudflare R2 en servidor -->
+		<!-- Almacenamiento S3-compatible: MinIO en local, Cloudflare R2 en servidor. Incluye
+		     S3Presigner (software.amazon.awssdk.services.s3.presigner): en esta versión del
+		     SDK ya no es un artefacto separado ("s3-presigner"), va empaquetado en "s3". -->
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>

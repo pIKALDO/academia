@@ -29,7 +29,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
@@ -97,5 +99,10 @@ class StudentController {
     @PutMapping("/{id}/housing")
     HousingDto replaceHousing(@PathVariable UUID id, @Valid @RequestBody HousingRequest request) {
         return studentService.replaceHousing(id, request);
+    }
+
+    @PutMapping(path = "/{id}/photo", consumes = "multipart/form-data")
+    StudentAdminDto replacePhoto(@PathVariable UUID id, @RequestPart MultipartFile file) {
+        return studentService.replacePhoto(id, file);
     }
 }
