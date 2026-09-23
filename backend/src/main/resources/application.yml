@@ -46,6 +46,14 @@ spring:
     port: ${MAIL_PORT:1025}
 
 server:
+  tomcat:
+    # Sin esto, Tomcat detecta que el Content-Length declarado supera el límite, genera la
+    # respuesta 413 casi de inmediato y solo "traga" (descarta) hasta 2 MB (valor por defecto)
+    # del resto del cuerpo antes de cerrar la conexión — con un fichero de más de ese tamaño
+    # todavía en camino, el cliente ve un reset de conexión en vez del 413. Se sube por encima
+    # del límite de subida real (10 MB) para que Tomcat pueda tragarse cualquier cuerpo que
+    # supere ese límite y devolver el 413 con la conexión intacta.
+    max-swallow-size: 15MB
   servlet:
     session:
       cookie:
@@ -104,3 +112,18 @@ app:
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
   mail:
     from-address: ${MAIL_FROM_ADDRESS:no-reply@academia.local}
+  storage:
+    # Igual que spring.mail.host más arriba: hace falta un valor por defecto también en el
+    # perfil por defecto (tests con Testcontainers), o el arranque falla al enlazar
+    # StorageProperties aunque ningún test llegue a llamar realmente a S3Client/S3Presigner.
+    # endpoint/access-key-id/secret-access-key son credenciales de verdad en local y en
+    # servidor, así que sin valor por defecto aquí (application-local.yml los define).
+    endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
+    region: ${STORAGE_REGION:us-east-1}
+    bucket: ${STORAGE_BUCKET:academia-documents}
+    access-key-id: ${STORAGE_ACCESS_KEY_ID:test}
+    secret-access-key: ${STORAGE_SECRET_ACCESS_KEY:test}
+    path-style-access: ${STORAGE_PATH_STYLE_ACCESS:true}
+    # 60 segundos (docs/diseno-api.md sección 5.6): ni configurable por entorno, es una
+    # decisión del contrato de la API, no de despliegue.
+    presigned-url-duration: 60s

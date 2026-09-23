@@ -125,6 +125,186 @@
         "tags" : [ "Autenticación" ]
       }
     },
+    "/api/v1/documents/expiring" : {
+      "get" : {
+        "operationId" : "expiringDocuments",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "category",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PASSPORT", "ID_CARD", "VISA", "HEALTH_INSURANCE", "AUTHORIZATION", "SPORTS", "ACADEMIC", "OTHER" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "RECEIVED", "REVIEWED" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseDocumentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
+      }
+    },
+    "/api/v1/documents/{id}" : {
+      "delete" : {
+        "operationId" : "deleteDocument",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
+      },
+      "get" : {
+        "operationId" : "getDocument",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
+      },
+      "patch" : {
+        "operationId" : "updateDocument",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateDocumentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
+      }
+    },
+    "/api/v1/documents/{id}/download" : {
+      "get" : {
+        "operationId" : "downloadDocument",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
+      }
+    },
+    "/api/v1/documents/{id}/review" : {
+      "post" : {
+        "operationId" : "reviewDocument",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
+      }
+    },
     "/api/v1/emergency-contacts/{id}" : {
       "delete" : {
         "operationId" : "deleteEmergencyContact",
@@ -537,6 +717,49 @@
         "tags" : [ "Estudiantes" ]
       }
     },
+    "/api/v1/students/{id}/photo" : {
+      "put" : {
+        "operationId" : "replacePhoto",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StudentAdminDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Estudiantes" ]
+      }
+    },
     "/api/v1/students/{id}/sports-profile" : {
       "put" : {
         "operationId" : "replaceSportsProfile",
@@ -572,6 +795,154 @@
           }
         },
         "tags" : [ "Estudiantes" ]
+      }
+    },
+    "/api/v1/students/{studentId}/documents" : {
+      "get" : {
+        "operationId" : "listDocuments",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "studentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "category",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PASSPORT", "ID_CARD", "VISA", "HEALTH_INSURANCE", "AUTHORIZATION", "SPORTS", "ACADEMIC", "OTHER" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "RECEIVED", "REVIEWED" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "expiringBefore",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "in" : "query",
+          "name" : "expired",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseDocumentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
+      },
+      "post" : {
+        "operationId" : "uploadDocument",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "studentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "category",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PASSPORT", "ID_CARD", "VISA", "HEALTH_INSURANCE", "AUTHORIZATION", "SPORTS", "ACADEMIC", "OTHER" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "issuedAt",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "in" : "query",
+          "name" : "expiresAt",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Documentos" ]
       }
     },
     "/api/v1/students/{studentId}/emergency-contacts" : {
@@ -1070,6 +1441,90 @@
         },
         "required" : [ "displayName", "email", "role" ]
       },
+      "DocumentDto" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "type" : "string",
+            "enum" : [ "PASSPORT", "ID_CARD", "VISA", "HEALTH_INSURANCE", "AUTHORIZATION", "SPORTS", "ACADEMIC", "OTHER" ]
+          },
+          "contentType" : {
+            "type" : [ "string", "null" ]
+          },
+          "daysUntilExpiry" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "expired" : {
+            "type" : "boolean"
+          },
+          "expiresAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "issuedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "reviewedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "sizeBytes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "RECEIVED", "REVIEWED" ]
+          },
+          "studentId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "uploadedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "uploadedBy" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/UploadedByDto"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "category", "contentType", "daysUntilExpiry", "expired", "expiresAt", "id", "issuedAt", "name", "reviewedAt", "sizeBytes", "status", "studentId", "uploadedAt", "uploadedBy" ]
+      },
+      "DocumentsSummaryDto" : {
+        "type" : "object",
+        "properties" : {
+          "expired" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "expiringSoon" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "pending" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "expired", "expiringSoon", "pending", "total" ]
+      },
       "EducationDto" : {
         "type" : "object",
         "properties" : {
@@ -1285,6 +1740,21 @@
         },
         "required" : [ "number", "size", "totalElements", "totalPages" ]
       },
+      "PagedResponseDocumentDto" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocumentDto"
+            }
+          },
+          "page" : {
+            "$ref" : "#/components/schemas/PageInfo"
+          }
+        },
+        "required" : [ "content", "page" ]
+      },
       "PagedResponseEmergencyContactDto" : {
         "type" : "object",
         "properties" : {
@@ -1483,6 +1953,9 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "documentsSummary" : {
+            "$ref" : "#/components/schemas/DocumentsSummaryDto"
+          },
           "education" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/EducationDto"
@@ -1526,6 +1999,9 @@
           "nationality" : {
             "type" : [ "string", "null" ]
           },
+          "photoUrl" : {
+            "type" : [ "string", "null" ]
+          },
           "sportsProfile" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/SportsProfileDto"
@@ -1542,7 +2018,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "birthDate", "contact", "createdAt", "education", "emergencyContacts", "enrolledAt", "firstName", "guardians", "housing", "id", "lastName", "nationality", "sportsProfile", "status", "updatedAt" ]
+        "required" : [ "birthDate", "contact", "createdAt", "documentsSummary", "education", "emergencyContacts", "enrolledAt", "firstName", "guardians", "housing", "id", "lastName", "nationality", "photoUrl", "sportsProfile", "status", "updatedAt" ]
       },
       "StudentAdminLinkedGuardian" : {
         "type" : "object",
@@ -1605,6 +2081,9 @@
           "contact" : {
             "$ref" : "#/components/schemas/StudentGuardianContact"
           },
+          "documentsSummary" : {
+            "$ref" : "#/components/schemas/DocumentsSummaryDto"
+          },
           "education" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/StudentGuardianEducation"
@@ -1637,6 +2116,9 @@
           "nationality" : {
             "type" : [ "string", "null" ]
           },
+          "photoUrl" : {
+            "type" : [ "string", "null" ]
+          },
           "sportsProfile" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/StudentGuardianSportsProfile"
@@ -1649,7 +2131,7 @@
             "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
           }
         },
-        "required" : [ "birthDate", "contact", "education", "emergencyContacts", "firstName", "guardians", "id", "lastName", "nationality", "sportsProfile", "status" ]
+        "required" : [ "birthDate", "contact", "documentsSummary", "education", "emergencyContacts", "firstName", "guardians", "id", "lastName", "nationality", "photoUrl", "sportsProfile", "status" ]
       },
       "StudentGuardianEducation" : {
         "type" : "object",
@@ -1748,6 +2230,9 @@
       "StudentListDto" : {
         "type" : "object",
         "properties" : {
+          "documentsSummary" : {
+            "$ref" : "#/components/schemas/DocumentsSummaryDto"
+          },
           "firstName" : {
             "type" : "string"
           },
@@ -1758,12 +2243,35 @@
           "lastName" : {
             "type" : "string"
           },
+          "photoUrl" : {
+            "type" : [ "string", "null" ]
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "PROSPECT", "ACTIVE", "INACTIVE" ]
           }
         },
-        "required" : [ "firstName", "id", "lastName", "status" ]
+        "required" : [ "documentsSummary", "firstName", "id", "lastName", "photoUrl", "status" ]
+      },
+      "UpdateDocumentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "type" : "string",
+            "enum" : [ "PASSPORT", "ID_CARD", "VISA", "HEALTH_INSURANCE", "AUTHORIZATION", "SPORTS", "ACADEMIC", "OTHER" ]
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "issuedAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
       },
       "UpdateEmergencyContactRequest" : {
         "type" : "object",
@@ -1900,6 +2408,19 @@
             "enum" : [ "ADMIN", "GUARDIAN", "STUDENT" ]
           }
         }
+      },
+      "UploadedByDto" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "displayName", "id" ]
       },
       "UserDetailDto" : {
         "type" : "object",

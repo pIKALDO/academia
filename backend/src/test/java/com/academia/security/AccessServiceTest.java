@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.academia.users.AcademiaUserPrincipal;
 import com.academia.users.UserEntity;
 import com.academia.users.UserRole;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -21,10 +22,22 @@ class AccessServiceTest {
 
     private final UUID suHijo = UUID.randomUUID();
     private final UUID ajeno = UUID.randomUUID();
+    private final UUID documentoDeSuHijo = UUID.randomUUID();
+    private final UUID documentoAjeno = UUID.randomUUID();
+    private final UUID documentoInexistente = UUID.randomUUID();
 
     /** El tutor autenticado solo tiene acceso a {@link #suHijo}. */
-    private final AccessService access =
-            new AccessService((studentId, guardianUserId) -> studentId.equals(suHijo));
+    private final AccessService access = new AccessService(
+            (studentId, guardianUserId) -> studentId.equals(suHijo),
+            documentId -> {
+                if (documentId.equals(documentoDeSuHijo)) {
+                    return Optional.of(suHijo);
+                }
+                if (documentId.equals(documentoAjeno)) {
+                    return Optional.of(ajeno);
+                }
+                return Optional.empty();
+            });
 
     @AfterEach
     void limpiarContexto() {
@@ -40,7 +53,7 @@ class AccessServiceTest {
         assertThat(access.canEditStudent(suHijo)).isFalse();
         assertThat(access.canEditEmergencyContact(UUID.randomUUID())).isFalse();
         assertThat(access.canManageGuardians()).isFalse();
-        assertThat(access.canUploadDocument(suHijo)).isFalse();
+        assertThat(access.canUploadDocument(suHijo)).isEqualTo(StudentAccessDecision.FORBIDDEN);
         assertThat(access.canReviewDocument(suHijo)).isFalse();
         assertThat(access.canManageUsers()).isFalse();
     }
@@ -62,7 +75,7 @@ class AccessServiceTest {
         assertThat(access.canEditStudent(ajeno)).isTrue();
         assertThat(access.canEditEmergencyContact(UUID.randomUUID())).isTrue();
         assertThat(access.canManageGuardians()).isTrue();
-        assertThat(access.canUploadDocument(ajeno)).isTrue();
+        assertThat(access.canUploadDocument(ajeno)).isEqualTo(StudentAccessDecision.GRANTED);
         assertThat(access.canReviewDocument(UUID.randomUUID())).isTrue();
         assertThat(access.canManageUsers()).isTrue();
     }
@@ -109,8 +122,18 @@ class AccessServiceTest {
     void tutor_solo_puede_subir_documentos_de_su_hijo() {
         autenticarComo(UserRole.GUARDIAN);
 
-        assertThat(access.canUploadDocument(suHijo)).isTrue();
-        assertThat(access.canUploadDocument(ajeno)).isFalse();
+        assertThat(access.canUploadDocument(suHijo)).isEqualTo(StudentAccessDecision.GRANTED);
+    }
+
+    /** Ajeno → oculto (404), no prohibido: mismo criterio que ver al estudiante (regla nº1). */
+    @Test
+    void a_un_tutor_se_le_oculta_la_subida_a_un_estudiante_ajeno() {
+        autenticarComo(UserRole.GUARDIAN);
+
+        StudentAccessDecision decision = access.canUploadDocument(ajeno);
+
+        assertThat(decision.isGranted()).isFalse();
+        assertThat(decision.isHidden()).isTrue();
     }
 
     /**
@@ -135,9 +158,47 @@ class AccessServiceTest {
         assertThat(access.canEditStudent(suHijo)).isFalse();
         assertThat(access.canEditEmergencyContact(UUID.randomUUID())).isFalse();
         assertThat(access.canManageGuardians()).isFalse();
-        assertThat(access.canUploadDocument(suHijo)).isFalse();
+        assertThat(access.canUploadDocument(suHijo)).isEqualTo(StudentAccessDecision.FORBIDDEN);
         assertThat(access.canReviewDocument(UUID.randomUUID())).isFalse();
         assertThat(access.canManageUsers()).isFalse();
+    }
+
+    @Test
+    void admin_ve_cualquier_documento_puede_borrarlo_editarlo_y_ver_los_que_caducan() {
+        autenticarComo(UserRole.ADMIN);
+
+        assertThat(access.canViewDocument(documentoAjeno)).isEqualTo(StudentAccessDecision.GRANTED);
+        assertThat(access.canDeleteDocument(documentoAjeno)).isTrue();
+        assertThat(access.canEditDocument(documentoAjeno)).isTrue();
+        assertThat(access.canViewExpiringDocuments()).isTrue();
+    }
+
+    @Test
+    void tutor_ve_el_documento_de_su_hijo_pero_no_puede_borrarlo_ni_editarlo_ni_ver_los_que_caducan() {
+        autenticarComo(UserRole.GUARDIAN);
+
+        assertThat(access.canViewDocument(documentoDeSuHijo)).isEqualTo(StudentAccessDecision.GRANTED);
+        assertThat(access.canDeleteDocument(documentoDeSuHijo)).isFalse();
+        assertThat(access.canEditDocument(documentoDeSuHijo)).isFalse();
+        assertThat(access.canViewExpiringDocuments()).isFalse();
+    }
+
+    /** Documento de un estudiante ajeno → oculto (404), no prohibido (regla no negociable nº1). */
+    @Test
+    void a_un_tutor_se_le_oculta_el_documento_de_un_estudiante_ajeno() {
+        autenticarComo(UserRole.GUARDIAN);
+
+        StudentAccessDecision decision = access.canViewDocument(documentoAjeno);
+
+        assertThat(decision.isGranted()).isFalse();
+        assertThat(decision.isHidden()).isTrue();
+    }
+
+    @Test
+    void un_documento_inexistente_tambien_se_oculta() {
+        autenticarComo(UserRole.GUARDIAN);
+
+        assertThat(access.canViewDocument(documentoInexistente)).isEqualTo(StudentAccessDecision.HIDDEN);
     }
 
     private void autenticarComo(UserRole role) {

@@ -464,15 +464,111 @@ similar instalado todavía):
 nuevas. `ng test` no tiene instalado Angular Testing Library ni Playwright/Cypress; añadirlos es
 una decisión de infraestructura de testing que excede este corte.
 
+### Corte 3 — documentos, almacenamiento S3/MinIO (2026-09-23)
+
+Incluye:
+
+- **Módulo `documents`** completo (docs/diseno-api.md sección 5.6/5.7): `DocumentEntity`,
+  `DocumentRepository`, `DocumentService`, `DocumentController`, DTOs (`DocumentDto`,
+  `UploadedByDto`, `UpdateDocumentRequest`). Estados `PENDING → RECEIVED → REVIEWED`; `expired`
+  y `daysUntilExpiry` son campos calculados en el mapeo, nunca columnas (regla no negociable
+  nº11). Subir el fichero transiciona `PENDING → RECEIVED` automáticamente (es un paso natural,
+  no revisable); `POST /documents/{id}/review` es la única vía a `REVIEWED`, y falla con 409 si
+  el documento aún no tiene fichero o ya está revisado.
+- **Almacenamiento S3-compatible**: `StorageProperties` + `StorageConfig` (`S3Client`,
+  `S3Presigner`) y `StorageService`, en `config/`. El mismo código apunta a MinIO en local
+  (`forcePathStyle=true`, endpoint explícito) o a Cloudflare R2 en servidor
+  (`forcePathStyle=false`, sin endpoint override) solo por configuración, sin ramas en el
+  código. Clave de almacenamiento siempre `students/{studentId}/{uuid}` (regla no negociable
+  nº7), tanto para documentos como para la foto del estudiante.
+- **Validación de subida por contenido real** (`FileTypeSniffer`, regla no negociable nº8):
+  comprueba los primeros bytes del fichero (PDF/JPEG/PNG), no la extensión ni el
+  `Content-Type` declarado. Se decidió no añadir Apache Tika como dependencia: con solo 3
+  tipos permitidos, comparar cabeceras a mano es más simple y con menos superficie que una
+  librería de sniffing general. Tipo no permitido → 415 (nuevo `UnsupportedMediaTypeException`
+  + handler en `GlobalExceptionHandler`); fichero > 10 MB → 413 (ya cubierto por el límite
+  global de multipart de corte 1, sin código nuevo).
+- **Descarga con 302**: `GET /documents/{id}/download` valida el permiso y redirige (`302`,
+  `HttpStatus.FOUND`) a una URL prefirmada de 60 segundos (`app.storage.presigned-url-duration`).
+  `photoUrl` en los DTOs de estudiante se resuelve igual, calculado en `StudentService` (nunca
+  dentro del `from()` estático del DTO, que se mantiene libre de dependencias) — el presign es
+  una operación local (HMAC-SHA256, sin red), así que resolverlo por fila en un listado de
+  hasta 100 estudiantes no es un problema de rendimiento real.
+- **`photoUrl` y `documentsSummary`**, aplazados del corte 2, ya en `StudentListDto`,
+  `StudentAdminDto` y `StudentGuardianDto`. `documentsSummary` sale de una consulta agregada
+  por lote (`DocumentRepository.summarizeByStudentIds`) para el listado, evitando N+1; para la
+  ficha individual, `DocumentRepository.summarize`. `PUT /students/{id}/photo` (ADMIN,
+  multipart, JPEG/PNG) añadido junto al resto de endpoints de bloque.
+- **Aviso diario de caducidad**: `DocumentExpiryNotificationService`, `@Scheduled` diario,
+  horizontes de 30 y 7 días. Idempotencia con `INSERT ... ON CONFLICT (document_id, kind,
+  recipient_email) DO NOTHING`: si la fila no se inserta (ya existía), no se envía el correo.
+  Solo `EXPIRY_30D`/`EXPIRY_7D`; `EXPIRED` existe en el enum de BD pero no se implementa el
+  envío (pendiente, corte futuro).
+- **`@SQLRestriction` — alcance decidido para este corte** (ver punto anterior en "Decisiones
+  a revisar", ahora resuelto parcialmente): `DocumentEntity` **no** lleva
+  `@SQLRestriction("deleted_at IS NULL")` — el filtro de borrados vive explícito en las
+  consultas del repositorio, para no repetir en una entidad nueva el problema ya detectado en
+  `StudentEntity` (esconder filas incluso al administrador, sin camino de restauración).
+  `DocumentService.getEntityOrThrow` comprueba además que el estudiante propietario siga
+  existiendo (`studentRepository.existsById`), igual que `EmergencyContactService`, para que un
+  documento de un estudiante borrado dé 404 por su URL plana. El problema de fondo en
+  `StudentEntity` (sin ruta de restauración, ni siquiera para ADMIN) **sigue sin resolver**,
+  deliberadamente: no hay endpoint de restauración en `docs/diseno-api.md` y arreglarlo exige
+  tocar `StudentService`/`AccessService`/tests ya existentes de corte 2. Se deja para un corte
+  futuro que lo aborde explícitamente.
+- **Corregido durante la revisión de este corte**: `AccessService.canUploadDocument` pasó de
+  `boolean` (regla de operación) a devolver `StudentAccessDecision` (regla de visibilidad),
+  delegando en `canViewStudent`. Con `boolean`, una familia sin ningún vínculo con el
+  estudiante recibía 403 en vez de 404 al intentar subirle un documento — la única grieta
+  detectada en la regla no negociable nº1 en todo este corte. Test:
+  `DocumentControllerIT.familia_subiendo_documento_de_hijo_ajeno_devuelve_404` +
+  `subida_a_estudiante_ajeno_e_inexistente_devuelve_exactamente_la_misma_respuesta` (mismo
+  patrón que `StudentAccessIT`). El resto de reglas nuevas de `AccessService`
+  (`canReviewDocument`, `canEditDocument`, `canDeleteDocument`, `canViewExpiringDocuments`) son
+  reglas de operación puras (ADMIN únicamente, 403 sin mirar el id) y no tienen esta tensión,
+  porque no dependen de a quién pertenece el recurso.
+- **Seed ampliado**: Danylo (PASSPORT revisado sin caducar próxima, AUTHORIZATION pendiente sin
+  fichero), Sofiia (HEALTH_INSURANCE recibido, caduca en ~20 días — "próximo a caducar"),
+  Lucía (ID_CARD revisado, caducado). Fechas relativas a `LocalDate.now()`, nunca fijas.
+  Ninguno tiene objeto real en MinIO (`storage_key` es una clave plausible, sin fichero
+  detrás): sirve para listado, resumen y flujo de revisión, no para probar la descarga real.
+
+**Tests**: `DocumentControllerIT` (415, 413, 404 en subida a estudiante ajeno + comparación de
+cuerpo con id inexistente, 403 al revisar como familia, idempotencia del aviso con
+`@MockitoBean JavaMailSender`), `AccessServiceTest` (las 5 reglas nuevas), `FileTypeSnifferTest`
+(unitario, puro).
+
+**Verificado con `mvn verify` (Docker real, no solo `mvn test`)**: tres fallos reales
+detectados y corregidos tras la primera implementación, ninguno relacionado con Docker en sí:
+
+1. `DocumentEntity.checksumSha256` mapeado como `VARCHAR` normal en vez de
+   `@JdbcTypeCode(SqlTypes.CHAR)` (la columna es `CHAR(64)`, igual que `nationality`/`country`
+   en `StudentEntity`) → `SchemaManagementException` al validar el esquema.
+2. `StudentGuardianRepository` tenía un record (`GuardianRecipient`) anidado como destino de una
+   expresión `SELECT new ...` en JPQL; Hibernate no resolvía la clase anidada por nombre
+   completo. Se sacó a un record de nivel superior (`com.academia.guardians.GuardianRecipient`).
+3. `DocumentRepository.summarize(ByStudentIds)` comparaba el enum de estado con una referencia
+   literal (`d.status = com.academia.documents.DocumentStatus.PENDING`) en vez de un parámetro
+   con bind; Hibernate generaba un cast Postgres roto (`'PENDING'::DocumentStatus`, con el
+   nombre de la clase Java en vez del tipo real `document_status`) y rompía con 500 casi
+   cualquier lectura de estudiante (por `documentsSummary`). Corregido a `:pending` con bind,
+   igual que `UserRepository.search`.
+
+Efecto colateral encontrado a la vez: subir un fichero > 10 MB devolvía un reset de conexión en
+vez de un 413 limpio (Tomcat solo "traga" 2 MB por defecto del cuerpo tras generar el error).
+Añadido `server.tomcat.max-swallow-size: 15MB`.
+
+Con las cuatro correcciones, `mvn verify` completo en verde: los 5 tests pedidos, más el resto
+de la suite (`StudentAccessIT`, `StudentControllerIT`, etc., que también cambiaron por
+`photoUrl`/`documentsSummary`).
+
 ## Corte actual y siguiente paso
 
-**Corte actual:** ninguno en marcha. Corte web 2 cerrado (arriba).
+**Corte actual:** ninguno en marcha. Corte 3 cerrado y verificado con `mvn verify`.
 
-**Siguiente:** corte de documentos (`documents`). Además del módulo, trae lo que se aplazó del
-corte 2: almacenamiento S3/MinIO, `PUT /students/{id}/photo` + `photoUrl` prefirmada,
-`documentsSummary` en la ficha y el listado, y la revisión de `@SQLRestriction` (ver
-"Decisiones a revisar"). En el frontend, sustituir `shared/avatar/` por la foto real en listado
-y ficha cuando `photoUrl` llegue al contrato.
+**Siguiente:** sin decidir. Candidatos: frontend de documentos (`features/documents/`, sustituir
+`shared/avatar/` por `photoUrl` real en listado y ficha de estudiantes), o abordar la
+restauración de estudiantes borrados (ver "Decisiones a revisar").
 
 ## Decisiones tomadas que no están en los documentos de diseño
 
@@ -500,20 +596,20 @@ y ficha cuando `photoUrl` llegue al contrato.
 ## Decisiones a revisar
 
 - **`@SQLRestriction("deleted_at IS NULL")` en `StudentEntity`** (aceptado solo para el corte
-  2). Tiene dos consecuencias que revisar **en el corte de documentos**:
+  2). Revisada en el corte de documentos (corte 3, arriba); queda pendiente un único punto:
   1. Un estudiante borrado es invisible para siempre, **también para el administrador**: no hay
      forma de consultarlo ni de restaurarlo por la API, y el borrado lógico existe justo para
-     poder recuperar (docs/modelo-datos.md sección 1.3).
-  2. La restricción no se propaga: los documentos del estudiante (y sus contactos de
-     emergencia, vínculos y bloques) siguen existiendo. Hoy, cada ruta que parte de un
-     id de contacto comprueba a mano que el estudiante exista
-     (`EmergencyContactService.getEntityOrThrow`). `GET /documents/{id}` necesitará lo
-     mismo, o un documento de un estudiante borrado seguiría accesible por su URL plana.
-
-  Alternativas a valorar entonces: filtrar `deleted_at` en las consultas del repositorio en
-  lugar de en la entidad, con una ruta explícita de administrador para ver y restaurar
-  borrados; o un `@Filter` de Hibernate que se active por defecto y se desactive solo en esa
-  ruta.
+     poder recuperar (docs/modelo-datos.md sección 1.3). **Sigue sin resolver, a propósito**:
+     no hay endpoint de restauración en `docs/diseno-api.md`, y arreglarlo es un cambio
+     transversal (filtrar `deleted_at` en las consultas del repositorio en lugar de en la
+     entidad, con una ruta explícita de administrador para ver y restaurar borrados; o un
+     `@Filter` de Hibernate activado por defecto) que toca `StudentService`/`AccessService` y
+     tests ya existentes de corte 2. Para un corte futuro que lo aborde explícitamente.
+  2. ~~La restricción no se propaga: los documentos del estudiante... seguirían accesibles por
+     su URL plana.~~ **Resuelto en el corte 3**: `DocumentEntity` no lleva
+     `@SQLRestriction` (el filtro vive en las consultas del repositorio) y
+     `DocumentService.getEntityOrThrow` comprueba que el estudiante propietario siga
+     existiendo, igual que `EmergencyContactService.getEntityOrThrow`.
 
 ## Pendientes conocidos
 
@@ -561,3 +657,22 @@ y ficha cuando `photoUrl` llegue al contrato.
   arriba) — solo probado por `curl` en esta máquina.
 - `frontend/` no tiene todavía pantallas de `students` ni `documents`: fuera de alcance del
   corte web 1 a propósito, su API aún no existe.
+- **`EXPIRED` como tipo de aviso** (`document_notifications.kind`): el valor existe en el enum
+  de BD desde `V4__documents.sql` pero no se envía — solo se pidió `EXPIRY_30D`/`EXPIRY_7D` en
+  el corte 3. Sin decidir si haría falta y con qué cadencia (¿un aviso al día mientras siga
+  caducado, o uno solo el día que caduca?).
+- **Sin Testcontainer de MinIO/S3**: ningún test de corte 3 llega a llamar de verdad al
+  `S3Client` (415/413 fallan antes; el 404/403 de subida y revisión los corta la
+  autorización; el aviso de caducidad no sube ni descarga nada). `application.yml` lleva
+  credenciales/endpoint dummy para que el contexto arranque en tests sin depender de un MinIO
+  real. Si en el futuro hace falta probar la subida+descarga de extremo a extremo (el objeto
+  llega a existir en el bucket, la URL prefirmada funciona), habrá que añadir
+  `org.testcontainers:minio` y un segundo contenedor estático en `AbstractIntegrationTest`.
+- **Verificación pendiente con Docker**: ningún `*IT` (ni los nuevos de `documents` ni los ya
+  existentes que tocan `StudentAdminDto`/`StudentGuardianDto`/`StudentListDto`) se ha podido
+  ejecutar en esta máquina en el momento de cerrar el corte 3 — no había Docker disponible.
+  Ejecutar `mvn verify` antes de dar el corte por completamente cerrado.
+- El enlace del correo de aviso de caducidad (`document-expiry.html`) apunta a
+  `{frontendBaseUrl}/students/{studentId}` (ruta real de `frontend/src/app/app.routes.ts`), no
+  a una ruta en español: el frontend no tiene todavía una vista de detalle de estudiante para
+  familias con esa URL exacta: revisar cuando se construya la pantalla.

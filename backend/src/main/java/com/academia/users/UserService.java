@@ -11,6 +11,7 @@ import com.academia.users.dto.UserProfileDto;
 import com.academia.users.dto.UserSummaryDto;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -115,6 +116,19 @@ public class UserService {
     @Transactional(readOnly = true)
     UserProfileDto getProfile(UUID id) {
         return UserProfileDto.from(getEntityOrThrow(id));
+    }
+
+    /**
+     * Usado por {@code documents} para resolver {@code uploadedBy}/{@code reviewedBy}
+     * (docs/diseno-api.md sección 5.6): solo lo mínimo que necesita esa vista, sin exponer
+     * {@link UserRepository} —package-private— fuera de este módulo.
+     */
+    @Transactional(readOnly = true)
+    public Optional<UserSummary> findSummary(UUID id) {
+        return userRepository.findById(id).map(user -> new UserSummary(user.getId(), user.getDisplayName()));
+    }
+
+    public record UserSummary(UUID id, String displayName) {
     }
 
     private UserEntity getEntityOrThrow(UUID id) {

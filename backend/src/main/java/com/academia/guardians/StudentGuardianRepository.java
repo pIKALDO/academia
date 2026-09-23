@@ -19,4 +19,17 @@ public interface StudentGuardianRepository extends JpaRepository<StudentGuardian
             ORDER BY l.primary DESC, g.lastName, g.firstName
             """)
     List<StudentGuardianEntity> findWithGuardianByStudentId(@Param("studentId") UUID studentId);
+
+    /**
+     * Destinatarios de los avisos de caducidad (corte 3): los tutores vinculados con
+     * {@code has_access = true}, sin importar si son el principal. Un tutor sin
+     * {@code hasAccess} no entra en la plataforma, así que tampoco tiene sentido avisarlo por
+     * correo de algo que no puede consultar.
+     */
+    @Query("""
+            SELECT new com.academia.guardians.GuardianRecipient(g.email, g.firstName)
+            FROM StudentGuardianEntity l JOIN l.guardian g
+            WHERE l.id.studentId = :studentId AND l.hasAccess = true AND g.email IS NOT NULL
+            """)
+    List<GuardianRecipient> findAccessibleGuardianRecipients(@Param("studentId") UUID studentId);
 }

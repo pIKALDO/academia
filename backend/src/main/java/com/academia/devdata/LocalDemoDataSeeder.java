@@ -1,7 +1,10 @@
 package com.academia.devdata;
 
 import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import org.hibernate.id.uuid.UuidVersion7Strategy;
 import org.slf4j.Logger;
@@ -72,7 +75,8 @@ class LocalDemoDataSeeder implements ApplicationRunner {
         String hash = passwordEncoder.encode(familyPassword);
 
         // Familia Kovalenko: dos hermanos, dos tutores.
-        UUID olena = guardian(user("olena.kovalenko@familia.local", "Olena Kovalenko", hash),
+        UUID olenaUserId = user("olena.kovalenko@familia.local", "Olena Kovalenko", hash);
+        UUID olena = guardian(olenaUserId,
                 "Olena", "Kovalenko", "+34 600 000 001", "olena.kovalenko@familia.local");
         UUID taras = guardian(user("taras.kovalenko@familia.local", "Taras Kovalenko", hash),
                 "Taras", "Kovalenko", "+34 600 000 002", "taras.kovalenko@familia.local");
@@ -106,6 +110,25 @@ class LocalDemoDataSeeder implements ApplicationRunner {
         housing(lucia, "Familia de acogida, calle Ejemplo 3", "Familia de acogida");
         education(lucia, "IES Ejemplo", "1º ESO");
         emergencyContact(lucia, "Pedro Martín", "Padre", "+34 600 000 020");
+
+        // Documentación de demostración (corte 3). El id del administrador es opcional: puede
+        // no existir todavía ningún ADMIN en este arranque (LocalAdminBootstrapper corre en
+        // otro bean), y uploaded_by/reviewed_by son nulables.
+        UUID adminId = findAnyAdminId();
+        LocalDate today = LocalDate.now();
+
+        // Danylo: pasaporte ya revisado, lejos de caducar.
+        documentReviewed(danylo, "PASSPORT", "Pasaporte Danylo.pdf",
+                today.minusYears(2), today.plusYears(3), adminId);
+        // Danylo: autorización todavía pendiente, sin fichero.
+        documentPending(danylo, "AUTHORIZATION", "Autorización de viaje.pdf");
+
+        // Sofiia: seguro médico recibido, caduca dentro de 20 días (dentro del horizonte de
+        // 30 días de "próximo a caducar").
+        documentReceived(sofiia, "HEALTH_INSURANCE", "Seguro médico Sofiia.pdf", today.plusDays(20), olenaUserId);
+
+        // Lucía: DNI ya revisado, caducado hace unos meses.
+        documentReviewed(lucia, "ID_CARD", "DNI Lucía.pdf", today.minusYears(5), today.minusMonths(3), adminId);
 
         log.warn("Datos de demostración cargados: 2 familias (3 cuentas de tutor) y 3 estudiantes (solo en el perfil local).");
     }
@@ -170,6 +193,52 @@ class LocalDemoDataSeeder implements ApplicationRunner {
                 INSERT INTO emergency_contacts (id, student_id, name, relationship, phone, priority)
                 VALUES (?, ?, ?, ?, ?, 1)
                 """, newId(), studentId, name, relationship, phone);
+    }
+
+    /**
+     * Ninguno de estos documentos tiene un objeto real en MinIO: la clave de almacenamiento es
+     * solo un valor plausible ({@code students/{id}/{uuid}}) para ejercitar el listado, el
+     * resumen y la revisión sin depender de una subida real. Descargar uno de estos documentos
+     * de demostración fallaría contra el almacenamiento real.
+     */
+    private void documentReviewed(UUID studentId, String category, String name, LocalDate issuedAt,
+            LocalDate expiresAt, UUID reviewerUserId) {
+        UUID id = newId();
+        String storageKey = "students/" + studentId + "/" + UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO documents (id, student_id, category, name, storage_key, content_type, size_bytes,
+                    status, issued_at, expires_at, uploaded_by, uploaded_at, reviewed_by, reviewed_at)
+                VALUES (?, ?, ?::document_category, ?, ?, 'application/pdf', 123456,
+                    'REVIEWED'::document_status, ?, ?, ?, ?, ?, ?)
+                """, id, studentId, category, name, storageKey, Date.valueOf(issuedAt), Date.valueOf(expiresAt),
+                reviewerUserId, Timestamp.from(Instant.now()), reviewerUserId, Timestamp.from(Instant.now()));
+    }
+
+    private void documentReceived(UUID studentId, String category, String name, LocalDate expiresAt,
+            UUID uploaderUserId) {
+        UUID id = newId();
+        String storageKey = "students/" + studentId + "/" + UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO documents (id, student_id, category, name, storage_key, content_type, size_bytes,
+                    status, expires_at, uploaded_by, uploaded_at)
+                VALUES (?, ?, ?::document_category, ?, ?, 'application/pdf', 234567,
+                    'RECEIVED'::document_status, ?, ?, ?)
+                """, id, studentId, category, name, storageKey, Date.valueOf(expiresAt), uploaderUserId,
+                Timestamp.from(Instant.now()));
+    }
+
+    private void documentPending(UUID studentId, String category, String name) {
+        jdbc.update("""
+                INSERT INTO documents (id, student_id, category, name, status)
+                VALUES (?, ?, ?::document_category, ?, 'PENDING'::document_status)
+                """, newId(), studentId, category, name);
+    }
+
+    /** Puede no existir ningún ADMIN todavía en este arranque: {@code uploaded_by}/{@code reviewed_by} son nulables. */
+    private UUID findAnyAdminId() {
+        List<UUID> ids = jdbc.queryForList(
+                "SELECT id FROM users WHERE role = 'ADMIN'::user_role LIMIT 1", UUID.class);
+        return ids.isEmpty() ? null : ids.get(0);
     }
 
     /** El mismo generador UUID v7 que usan las entidades con {@code @UuidGenerator(style = TIME)}. */

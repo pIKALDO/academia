@@ -1,7 +1,14 @@
 package com.academia.students;
 
 import com.academia.common.audit.Audited;
+import com.academia.common.error.UnprocessableEntityException;
+import com.academia.common.error.UnsupportedMediaTypeException;
 import com.academia.common.web.PagedResponse;
+import com.academia.config.StorageProperties;
+import com.academia.config.StorageService;
+import com.academia.documents.DocumentRepository;
+import com.academia.documents.FileTypeSniffer;
+import com.academia.documents.dto.DocumentsSummaryDto;
 import com.academia.guardians.StudentGuardianRepository;
 import com.academia.security.AccessService;
 import com.academia.security.HideStudentWhenNotVisible;
@@ -17,15 +24,23 @@ import com.academia.students.dto.StudentDetailDto;
 import com.academia.students.dto.StudentGuardianDto;
 import com.academia.students.dto.StudentListDto;
 import com.academia.students.dto.UpdateStudentRequest;
+import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authorization.method.HandleAuthorizationDenied;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Ficha del estudiante y sus bloques (docs/diseno-api.md sección 5.3).
@@ -43,18 +58,26 @@ public class StudentService {
     private final HousingInfoRepository housingInfoRepository;
     private final EmergencyContactRepository emergencyContactRepository;
     private final StudentGuardianRepository studentGuardianRepository;
+    private final DocumentRepository documentRepository;
+    private final StorageService storageService;
+    private final StorageProperties storageProperties;
     private final AccessService access;
 
     StudentService(StudentRepository studentRepository, SportsProfileRepository sportsProfileRepository,
             EducationInfoRepository educationInfoRepository, HousingInfoRepository housingInfoRepository,
             EmergencyContactRepository emergencyContactRepository,
-            StudentGuardianRepository studentGuardianRepository, AccessService access) {
+            StudentGuardianRepository studentGuardianRepository,
+            DocumentRepository documentRepository, StorageService storageService,
+            StorageProperties storageProperties, AccessService access) {
         this.studentRepository = studentRepository;
         this.sportsProfileRepository = sportsProfileRepository;
         this.educationInfoRepository = educationInfoRepository;
         this.housingInfoRepository = housingInfoRepository;
         this.emergencyContactRepository = emergencyContactRepository;
         this.studentGuardianRepository = studentGuardianRepository;
+        this.documentRepository = documentRepository;
+        this.storageService = storageService;
+        this.storageProperties = storageProperties;
         this.access = access;
     }
 
@@ -69,7 +92,19 @@ public class StudentService {
         Specification<StudentEntity> spec = access.visibleStudents()
                 .and(statusIs(status))
                 .and(nameContains(q));
-        return PagedResponse.from(studentRepository.findAll(spec, pageable), StudentListDto::from);
+        Page<StudentEntity> page = studentRepository.findAll(spec, pageable);
+
+        // Un resumen por fila sin N+1: una sola consulta agrupada para toda la página (regla
+        // no negociable nº9: como mucho 100 filas por página).
+        List<UUID> ids = page.getContent().stream().map(StudentEntity::getId).toList();
+        Map<UUID, DocumentsSummaryDto> summaries = documentRepository.summarizeByStudentIds(ids, LocalDate.now(),
+                LocalDate.now().plusDays(30));
+
+        // S3Presigner firma en local con HMAC-SHA256, sin ninguna llamada de red: presirmar
+        // hasta 100 URLs por página es barato, a diferencia de una consulta a base de datos
+        // por fila.
+        return PagedResponse.from(page, entity -> StudentListDto.from(entity, presignPhoto(entity.getPhotoKey()),
+                summaries.getOrDefault(entity.getId(), DocumentsSummaryDto.EMPTY)));
     }
 
     @PreAuthorize("@access.canViewStudent(#id)")
@@ -77,9 +112,58 @@ public class StudentService {
     @Transactional(readOnly = true)
     public StudentDetailDto get(UUID id) {
         StudentSheet sheet = loadSheet(id);
+        String photoUrl = presignPhoto(sheet.student().getPhotoKey());
+        DocumentsSummaryDto summary = documentsSummaryFor(id);
         return access.canSeeInternalStudentData()
-                ? StudentAdminDto.from(sheet)
-                : StudentGuardianDto.from(sheet);
+                ? StudentAdminDto.from(sheet, photoUrl, summary)
+                : StudentGuardianDto.from(sheet, photoUrl, summary);
+    }
+
+    /**
+     * {@code PUT /students/{id}/photo} (docs/diseno-api.md sección 5.3): ADMIN únicamente,
+     * validación por contenido (regla no negociable nº8) restringida a JPEG/PNG —una foto de
+     * carné no tiene sentido como PDF—. Clave de almacenamiento
+     * {@code students/{studentId}/{uuid}} (regla no negociable nº7); el objeto anterior se
+     * borra en segundo plano, sin tumbar la petición si el borrado falla.
+     */
+    @PreAuthorize("@access.canEditStudent(#id)")
+    @Audited(action = "STUDENT_PHOTO_UPDATED", entity = "STUDENT", studentIdParam = "id")
+    @Transactional
+    public StudentAdminDto replacePhoto(UUID id, MultipartFile file) {
+        StudentEntity student = getEntityOrThrow(id);
+        byte[] content = readBytes(file);
+        String contentType = FileTypeSniffer.detect(content, Set.of(FileTypeSniffer.JPEG, FileTypeSniffer.PNG))
+                .orElseThrow(() -> new UnsupportedMediaTypeException(
+                        "Solo se admiten fotografías JPEG o PNG, comprobadas por contenido."));
+
+        String oldPhotoKey = student.getPhotoKey();
+        String newPhotoKey = "students/" + id + "/" + UUID.randomUUID();
+        storageService.upload(newPhotoKey, content, contentType);
+        student.changePhotoKey(newPhotoKey);
+        studentRepository.flush();
+
+        if (oldPhotoKey != null) {
+            storageService.delete(oldPhotoKey);
+        }
+
+        return StudentAdminDto.from(loadSheet(id), presignPhoto(newPhotoKey), documentsSummaryFor(id));
+    }
+
+    private static byte[] readBytes(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw new UnprocessableEntityException("No se pudo leer el fichero recibido.");
+        }
+    }
+
+    private @Nullable String presignPhoto(@Nullable String photoKey) {
+        return photoKey == null ? null
+                : storageService.presignedGetUrl(photoKey, storageProperties.presignedUrlDuration()).toString();
+    }
+
+    private DocumentsSummaryDto documentsSummaryFor(UUID studentId) {
+        return documentRepository.summarize(studentId, LocalDate.now(), LocalDate.now().plusDays(30));
     }
 
     @PreAuthorize("@access.canCreateStudent()")
@@ -98,7 +182,7 @@ public class StudentService {
         student.changePostalCode(request.postalCode());
         student.changeCountry(request.country());
         studentRepository.saveAndFlush(student);
-        return StudentAdminDto.from(loadSheet(student.getId()));
+        return StudentAdminDto.from(loadSheet(student.getId()), null, documentsSummaryFor(student.getId()));
     }
 
     @PreAuthorize("@access.canEditStudent(#id)")
@@ -142,7 +226,7 @@ public class StudentService {
             student.changeCountry(request.country());
         }
         studentRepository.flush();
-        return StudentAdminDto.from(loadSheet(id));
+        return StudentAdminDto.from(loadSheet(id), presignPhoto(student.getPhotoKey()), documentsSummaryFor(id));
     }
 
     /**

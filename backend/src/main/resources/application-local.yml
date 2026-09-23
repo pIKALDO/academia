@@ -30,6 +30,14 @@ spring:
     password: ${POSTGRES_PASSWORD:academia_dev}
 
 app:
+  storage:
+    # MinIO de docker-compose.yml: mismas credenciales que el contenedor, estilo de ruta
+    # (docs/modelo-datos.md sección 5.3). En servidor, estas tres propiedades apuntan a
+    # Cloudflare R2 en vez de aquí, sin cambiar una línea de código.
+    endpoint: http://localhost:9000
+    access-key-id: ${MINIO_ROOT_USER:academia}
+    secret-access-key: ${MINIO_ROOT_PASSWORD:academia_dev_minio}
+    path-style-access: true
   admin:
     # Sin valor por defecto, a propósito (LocalAdminBootstrapper): si ADMIN_EMAIL/ADMIN_PASSWORD
     # no están exportadas, el arranque falla en vez de crear un admin con una contraseña fija
