@@ -502,8 +502,12 @@ Incluye:
 - **Aviso diario de caducidad**: `DocumentExpiryNotificationService`, `@Scheduled` diario,
   horizontes de 30 y 7 días. Idempotencia con `INSERT ... ON CONFLICT (document_id, kind,
   recipient_email) DO NOTHING`: si la fila no se inserta (ya existía), no se envía el correo.
-  Solo `EXPIRY_30D`/`EXPIRY_7D`; `EXPIRED` existe en el enum de BD pero no se implementa el
-  envío (pendiente, corte futuro).
+  Solo se envían `EXPIRY_30D`/`EXPIRY_7D`. El enum `notification_kind` de BD tiene un tercer
+  valor, `EXPIRED` — un aviso aparte para cuando el documento ya ha caducado, no un estado del
+  documento (`documents.status` no tiene, ni debe tener, "caducado": es un campo calculado,
+  decisión de docs/modelo-datos.md sección 5.1, no algo pendiente de implementar). No se envía
+  en este corte; ver "Pendientes conocidos" para la decisión de diseño abierta (si hace falta y
+  con qué cadencia).
 - **`@SQLRestriction` — alcance decidido para este corte** (ver punto anterior en "Decisiones
   a revisar", ahora resuelto parcialmente): `DocumentEntity` **no** lleva
   `@SQLRestriction("deleted_at IS NULL")` — el filtro de borrados vive explícito en las
@@ -657,9 +661,12 @@ restauración de estudiantes borrados (ver "Decisiones a revisar").
   arriba) — solo probado por `curl` en esta máquina.
 - `frontend/` no tiene todavía pantallas de `students` ni `documents`: fuera de alcance del
   corte web 1 a propósito, su API aún no existe.
-- **`EXPIRED` como tipo de aviso** (`document_notifications.kind`): el valor existe en el enum
-  de BD desde `V4__documents.sql` pero no se envía — solo se pidió `EXPIRY_30D`/`EXPIRY_7D` en
-  el corte 3. Sin decidir si haría falta y con qué cadencia (¿un aviso al día mientras siga
+- **Aviso `EXPIRED`** (`document_notifications.kind`, no `documents.status` — que un documento
+  caducado no tenga estado propio es una decisión de diseño ya tomada y cerrada, ver
+  docs/modelo-datos.md sección 5.1, nada que implementar ahí). El valor `EXPIRED` de
+  `notification_kind` existe en el enum de BD desde `V4__documents.sql` pero no se envía — solo
+  se pidió `EXPIRY_30D`/`EXPIRY_7D` en el corte 3. Sin decidir si hace falta un correo aparte
+  para cuando el documento ya ha caducado, y con qué cadencia (¿uno al día mientras siga
   caducado, o uno solo el día que caduca?).
 - **Sin Testcontainer de MinIO/S3**: ningún test de corte 3 llega a llamar de verdad al
   `S3Client` (415/413 fallan antes; el 404/403 de subida y revisión los corta la
